@@ -144,7 +144,7 @@ h.XDisplayLabels=tickdisplay;
 h.YDisplayLabels=tickdisplay2;
 %clear h caxis ztracesmeannumaf ztracesmeannum2af
 end
-%% Use two std to find the responsive cells
+%% Use three std to find the responsive cells
 NO=size(mouseztracesmeanpercell,2);
 zAVGbaseline{NO}=[];zAVGResponse{NO}=[];zStdbaseline{NO}=[];AUCabs{NO}=[];
 for i=1:NO
@@ -193,7 +193,7 @@ for i=1:NO
      NCall{i}=NC;
      ICall{i}=IC;
 end
-%% Use two std to find the responsive cells after condition/stimulation
+%% Use three std to find the responsive cells after condition/stimulation
 NO=size(mouseztracesmeanpercellaf,2);
 zAVGbaselineaf{NO}=[];zAVGResponseaf{NO}=[];zStdbaselineaf{NO}=[];zAVGResponseallaf=[];AUCaf{NO}=[];
 for i=1:NO
