@@ -639,53 +639,8 @@ for neuron = 1:154
     distancetoControl(neuron,i)=euclideanDistance;
 end
 end
-%%
-samplingRate = 1;  % Frames per second, adjust based on your data
-windowDuration = 1;  % Duration in seconds for the odor presentation window
-windowSize = windowDuration * samplingRate;  % Calculate the number of frames in the time window
-numTimePoints = 196;  % Total number of time points in the data (adjust based on your data)
-numComparisons = numTimePoints - windowSize;  % Number of consecutive time window comparisons
 
-% Initialize arrays to store angles and distances for each neuron, trial, and comparison
-anglesBetweenSets = zeros(154, 900, 5);
-distanceBetweenSets = zeros(154, 900, 5);
-
-% Loop through each trial to calculate the angle and distance
-for i = 1:5
-    for j =1:5
-    for neuron = 1:154
-        % Loop through consecutive time windows for each trial
-        for t = 1:30  % Loop from the first to the penultimate window
-            % Extract calcium activity for the current and previous time windows
-            currentWindow = mouseztraces{i}(t+44:(t+44+windowSize), neuron, :);
-            previousWindow = mouseztraces{j}(t+44+30:(t+44+30+windowSize), neuron, :);
-            
-            % Calculate the mean activity vector over the time window
-            meanCurrentActivity = mean(currentWindow, 3);  % Mean across time points
-            meanPreviousActivity = mean(previousWindow, 3);  
-            
-            % Calculate the dot product between the two mean activity vectors
-            dotProduct = dot(meanCurrentActivity, meanPreviousActivity);
-            
-            % ------ Euclidean Distance ------
-            euclideanDistance = norm(meanPreviousActivity - meanCurrentActivity);  % Euclidean distance
-            
-            % Calculate the norms (magnitudes) of both activity vectors
-            normCurrentActivity = norm(meanCurrentActivity);  % Magnitude of the current activity vector
-            normPreviousActivity = norm(meanPreviousActivity);  % Magnitude of the previous activity vector
-            
-            % Calculate the angle in radians between the two vectors using acos
-            angle = acos(dotProduct / (normCurrentActivity * normPreviousActivity));  % Angle in radians
-            
-            % Store the angle and Euclidean distance for this comparison
-            anglesBetweenSets(neuron, 30*(t-1)+q, j) = angle * 180 / pi;  % Convert to degrees
-            distanceBetweenSets(neuron, 30*(t-1)+q,j) = euclideanDistance;
-        end
-       
-        
-    end
-end
-%%
+%% The Euclidean distance of each neuron compared between odors
 samplingRate = 1;  % Frames per second, adjust based on your data
 windowDuration = 1;  % Duration in seconds for the odor presentation window
 windowSize = windowDuration * samplingRate;  % Calculate the number of frames in the time window
@@ -837,7 +792,7 @@ Comeanaf=mean(Coallaf,2);
 Coallaf=cat(2,Coallaf,Comeanaf);
 Coallmiceaf=cat(1,Coallmiceaf,Coallaf);
 end
-%% Save figures
+
 %% Save the files for four odors
 saveas(figure(1),'12animals_Mineral oil_bafcondition_MOsubtracted.png')
 saveas(figure(2),'12animals_Pentanol_bafcondition_MOsubtracte.png')
