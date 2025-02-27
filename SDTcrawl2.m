@@ -54,7 +54,7 @@ for subj = 1:length(subject_list)
         data(index).criterion = SDTout(3);
         
         data(index).dprimeRollingWindow = Dout';
-        
+        data(index).trialaccuracy = ConcatenatedSessions(:,7);
 
         output_dir_odor = sprintf('%s%s_%s', output_dir, subject, subj_odors(odor).name);
         fig_name1 = sprintf('%s_%s_FIG1.jpg',output_dir_odor,medpcfn(1:end-4))
