@@ -1,51 +1,82 @@
+% plot all the animals
+clear all
+%close all
+
+n = input('number of mice: ');
+k= input('number of odors: ');
+for i = 1:n
+    tracevar = uigetfile('*.*');
+    mousenum{i} = load(tracevar);
+    name1 = strsplit(tracevar, '_');
+    name1  = char(name1{1,1});
+    mouseID{i} = name1(1:5);
+end
+%% Combine all the animals_ before condition
+mouseztracesmeanpercell{k}=[];
+for i=1:k
+    for mouse=1:n
+        if n==1
+       
+        
+        mouseztracesmeanpercell{i}=mean(mousenum{1,mouse}.ztemptraceall{i},3);
+        end
+        
+        if n>1
+      
+        mouseztracesmeanpercell{i}=cat(2,mouseztracesmeanpercell{i},mean(mousenum{1,mouse}.ztemptraceall{i},3));  
+        end
+    end
+end
+%%
+mouseztracesmeanpercellaf{k}=[];
+for i=1:k
+    for mouse=1:n
+        if n==1
+        mouseztracesmeanpercellaf{i}=mousenum{1,mouse}.ztracesmeanpercellaf{i};
+        end
+        
+        if n>1
+    
+        mouseztracesmeanpercellaf{i}=cat(2,mouseztracesmeanpercellaf{i},mousenum{1,mouse}.ztracesmeanpercellaf{i});  
+        end
+    end
+end
+
+
 %% Subtract MO responsive cells
 submouseztracesmeanpercell=mouseztracesmeanpercell;submouseztracesmeanpercellaf=mouseztracesmeanpercellaf;
 for i=1:12
-    for j=1:size(RCall{1},1)
-        if RCall{1}(j,1)~=0
-           submouseztracesmeanpercell{i}(:,RCall{10}(j,1))=mouseztracesmeanpercell{i}(:,RCall{10}(j,1))-mouseztracesmeanpercell{10}(:,RCall{10}(j,1));
+    for j=1:size(RCall{10},1)
+        if RCall{10}(j,1)~=0
+           submouseztracesmeanpercell{i}(:,RCall{10}(j,1))=mouseztracesmeanpercell{i}(:,RCall{10}(j,1))-mouseztracesmeanpercell{1}(:,RCall{10}(j,1));
       
         else
         submouseztracesmeanpercell{i}(:,RCall{10}(j,1))=mouseztracesmeanpercell{i}(:,RCall{10}(j,1));
         end
     end
-   %  for j=1:size(RCallaf{1},1)
-   %      if RCallaf{1}(j,1)~=0
-   %         submouseztracesmeanpercellaf{i}(:,RCallaf{10}(j,1))=mouseztracesmeanpercellaf{i}(:,RCallaf{1}(j,1))-mouseztracesmeanpercellaf{1}(:,RCallaf{1}(j,1));
-   %      else
-   %         submouseztracesmeanpercellaf{i}(:,RCallaf{10}(j,1))=mouseztracesmeanpercellaf{i}(:,RCallaf{1}(j,1));
-   %      end
-   % 
-   % end
-
+ 
 end
 for i=1:12
 
         
-    for j=1:size(ICall{1},1)
-        if ICall{1}(j,1)~=0
-           submouseztracesmeanpercell{i}(:,ICall{10}(j,1))=mouseztracesmeanpercell{i}(:,ICall{10}(j,1))-mouseztracesmeanpercell{1}(:,ICall{10}(j,1));
+    for j=1:size(ICall{10},1)
+        if ICall{10}(j,1)~=0
+           submouseztracesmeanpercell{i}(:,ICall{10}(j,1))=mouseztracesmeanpercell{i}(:,ICall{10}(j,1))-mouseztracesmeanpercell{10}(:,ICall{10}(j,1));
         else
             submouseztracesmeanpercell{i}(:,ICall{10}(j,1))=mouseztracesmeanpercell{i}(:,ICall{10}(j,1));
         end
     end
-    % for j=1:size(ICallaf{1},1)
-    %     if ICallaf{1}(j,1)~=0
-    %        submouseztracesmeanpercellaf{i}(:,ICallaf{1}(j,1))=mouseztracesmeanpercellaf{i}(:,ICallaf{1}(j,1))-mouseztracesmeanpercellaf{1}(:,ICallaf{1}(j,1));
-    %     else
-    %     submouseztracesmeanpercellaf{i}(:,ICallaf{1}(j,1))=mouseztracesmeanpercellaf{i}(:,ICallaf{1}(j,1));
-    %     end
-    % end
+
 
 end
 %% plot the traces of all the animals
-%for i=1:size(submouseztracesmeanpercell,2)
-figure(4) 
-plot(Time4plot,mean(submouseztracesmeanpercell{4}(:,142:end),2),'LineWidth',2,'color','k');
+for i=1:size(submouseztracesmeanpercell,2)
+figure(i) 
+plot(Time4plot,mean(submouseztracesmeanpercell{i}(:,142:end),2),'LineWidth',2,'color','k');
 hold on
-SE = std(submouseztracesmeanpercell{4}(:,142:end)')/sqrt(size(submouseztracesmeanpercell{4}(:,142:end),2)); %I am not sure about what the SE will be??(:,RCall{i})
-    CIplus = mean(submouseztracesmeanpercell{4}(:,142:end),2)+(1.96*SE');%(:,RCall{i})
-    CIminus = mean(submouseztracesmeanpercell{4}(:,142:end),2)-(1.96*SE');%(:,RCall{i})
+SE = std(submouseztracesmeanpercell{i}(:,142:end)')/sqrt(size(submouseztracesmeanpercell{4}(:,142:end),2)); %I am not sure about what the SE will be??(:,RCall{i})
+    CIplus = mean(submouseztracesmeanpercell{i}(:,142:end),2)+(1.96*SE');%(:,RCall{i})
+    CIminus = mean(submouseztracesmeanpercell{i}(:,142:end),2)-(1.96*SE');%(:,RCall{i})
   shade(Time4plot,CIplus,Time4plot,CIminus,'FillType',[1 2;2 1],'LineStyle','none','FillColor',[0.8 0.8 0.8])%red shadow [0.6,0,0]
     clear CIplus CIminus SE  
 xline(0,'LineWidth',1) %on line
@@ -53,7 +84,7 @@ xline(0,'LineWidth',1) %on line
 xline(2,'LineWidth',1) % off line % 1 sec odor presentation
 ylim([-0.5 1])
 %clear mean
-%end
+end
 %%
 %for i=1:size(submouseztracesmeanpercellaf,2)
 figure(4)    
@@ -366,7 +397,7 @@ figure;imagesc(ev(:,end-3:end))
 
 % PCA dimensionality reduction
 % Project the data to top 3 eigenvectors 
-% corresponding to the largest 3 eigenvalues
+% corressponding to the largest 3 eigenvalues
 %data_2d = dataodorsandoffset*ev(:,size(ev)-1:size(ev));
 data_3d = PCAbfaf_pent*ev(:,size(ev)-2:size(ev));
 data_10d = PCAbfaf_pent*ev(:,size(ev)-9:size(ev));
