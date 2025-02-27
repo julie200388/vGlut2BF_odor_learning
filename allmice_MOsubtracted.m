@@ -1,7 +1,152 @@
-% plot all the animals
-clear all
-%close all
+%% Process the calcium data of individual mouse
 
+clear all
+close all
+NAC = input('number of accepted cells: '); %Number of accepted cells
+[phf,php] = uigetfile('/Documents/*.csv');
+photfn = sprintf('%s/%s',php,phf);
+tbl = readtable(photfn,'HeaderLines',0,'TextType','string');
+VarNames = tbl.Properties.VariableNames;
+
+allAC=tbl.("accepted");
+
+for i=1:NAC-1 %the number of accepted cells
+
+    AC=tbl.("accepted_"+num2str(i));
+    allAC=cat(2,allAC,AC);
+    clear AC
+end
+Time=tbl.("Time_s__CellStatus");
+%% Alternative script for opening the traces file
+% Specify the path to your CSV file
+filename = 'your_file.csv';
+
+% Read the CSV file into a table
+data = readtable(filename);
+allAC=table2array(data);
+Time=allAC(:,1);
+allAC=allAC(:,2:end);
+%% Seperate allAC into different days
+D2start=find(diff(Time)<-1);
+%% Analyzing bf(Day1)
+allACbf=allAC(1:(D2start),:);
+Timebf=Time(1:(D2start),:);
+allACbf(isnan(allACbf)==1)=0;
+
+%% Analyzing Af(Day2)
+allACaf=allAC(D2start+1:end,:);
+Timeaf=Time(D2start+1:end,:);
+allACaf(isnan(allACaf)==1)=0;
+%% only analyzing one day_RUN THIS AFTER getting allAC
+   Timebf=Time;
+   allACbf=allAC;
+   allACbf(isnan(allACbf))=0;
+%% settining up the DIO files_before
+DIO2 = readtable('A138Nt_0821bfcondition_GPIO.csv');
+
+%%
+DIO2=table2array(DIO2);
+a=find(DIO2(:,2)>1000);
+b=find(DIO2(:,2)<1000);
+DIO2(a(1:end),2)=1;
+DIO2(b(1:end),2)=0;
+d=diff(DIO2(:,2));
+d2=find(d==1)+1;
+odorpresentationtime=DIO2(d2,1);
+%% setting up the DIO files_after
+DIO3= readtable('A138Nt_0829afcondition_GPIO.csv');
+%%
+DIO3=table2array(DIO3);
+a=find(DIO3(:,2)>1000);
+b=find(DIO3(:,2)<1000);
+DIO3(a(1:end),2)=1;
+DIO3(b(1:end),2)=0;
+d=diff(DIO3(:,2));
+d2=find(d==1)+1;
+odorpresentationtime2=DIO3(d2,1);
+%% two Continuous DIO files 
+[fn4,pth4] = uigetfile('*.*');
+DIO1=sprintf('%s%s',pth4,fn4);
+DIO3=csvread(DIO1);
+a=find(DIO3(:,2)>1000);
+b=find(DIO3(:,2)<1000);
+DIO3(a(1:end),2)=1;
+DIO3(b(1:end),2)=0;
+d=diff(DIO3(:,2));
+d2=find(d==1)+1;
+odorpresentationtime2=DIO3(d2,1);
+odorpresentationtime3=odorpresentationtime2+DIO2(end,1);
+odorpresentationtime=cat(1,odorpresentationtime,odorpresentationtime3);
+
+%% Combine odor presentation and traces % 011422 data don't run this section
+[fn3,pth3] = uigetfile('*.*');
+odorsfn = sprintf('%s%s',pth3,fn3);
+odors = csvread(odorsfn);
+%% %% Combine odor presentation and traces % 011422 data don't run this section
+[fn5,pth5] = uigetfile('*.*');
+odorsfnaf = sprintf('%s%s',pth5,fn5);
+odorsaf = csvread(odorsfnaf);
+
+%% get average traces before condition
+FR = input('Frame rate: '); %Number of accepted cells
+BS=  input('Time before stimulation: ');
+RS=  input('Time after stimulation:');
+Timebf=Time;allACbf=allAC;
+ztemptraceall{max(odors)}=[];
+for i = 1:length(odorpresentationtime) %for 011422 file use this:i=1:(length(TP)-1)
+    ch = odors(i);
+  
+    [val,idx] = min(abs(Timebf-odorpresentationtime(i,1)));%This finds the closest actual time value in the trace times that matches the odor time.
+    temptrace = allACbf(idx-BS*FR:idx+RS*FR,:);
+    activetraces=temptrace-mean(temptrace(FR+1:BS*FR,:),1);
+    ztemptrace=activetraces./std(mean(temptrace(FR+1:BS*FR,:),1));%(activetraces-mean(activetraces,1))
+    temptracetime = Timebf(idx-BS*FR:idx+RS*FR);
+    ztemptraceall{ch}=cat(3,ztemptraceall{ch},ztemptrace);
+    clear ch startsec val idx temptrace temptracetime activetraces
+end
+
+ztracesmeanpercell{max(odors)}=[];
+for i=1:max(odors)
+    ztracesmeanpercell{i}=mean(ztemptraceall{i},3);
+end
+clear ztemptrace
+% for i =1:max(odors)
+%     [r,c]=size(odortracestimes{i});
+%     tracesmeanpercell{i}=odortracesall{i}./c;
+%     ztracesmeanpercell{i}=zodortracesall{i}./c;
+%     
+% end
+
+%% average traces after condition/stimulation
+ztemptraceallaf{max(odorsaf)}=[];
+for i = 1:length(odorpresentationtime2) %for 011422 file use this:i=1:(length(TP)-1)
+
+    ch = odorsaf(i);
+  
+    [val,idx] = min(abs(Timeaf-odorpresentationtime2(i,1)));%This finds the closest actual time value in the trace times that matches the odor time.
+   
+    temptrace = allACaf(idx-BS*FR:idx+RS*FR,:);
+    activetraces=temptrace-mean(temptrace(FR+1:BS*FR,:),1);
+    ztemptrace=activetraces./std(mean(temptrace(FR+1:BS*FR,:),1));%(activetraces-mean(activetraces,1))
+    temptracetimeaf = Timeaf(idx-BS*FR:idx+RS*FR);
+    
+    ztemptraceallaf{ch}=cat(3,ztemptraceallaf{ch},ztemptrace);
+
+    clear ch startsec val idx temptrace temptracetime activetraces
+end
+
+ztracesmeanpercellaf{max(odorsaf)}=[];
+for i=1:max(odorsaf)
+    ztracesmeanpercellaf{i}=mean(ztemptraceallaf{i},3);
+end
+% for i =1:max(odors)
+%     [r,c]=size(odortracestimes{i});
+%     tracesmeanpercell{i}=odortracesall{i}./c;
+%     ztracesmeanpercell{i}=zodortracesall{i}./c;
+%     
+% end% plot all the animals
+%% Open all the files from different animals
+% Save the data of individual mouse before this processing
 n = input('number of mice: ');
 k= input('number of odors: ');
 for i = 1:n
@@ -43,9 +188,9 @@ for i=1:k
 end
 
 
-%% Subtract MO responsive cells
+%% Subtract Mineral oil (MO) responsive cells Ch10 is MO
 submouseztracesmeanpercell=mouseztracesmeanpercell;submouseztracesmeanpercellaf=mouseztracesmeanpercellaf;
-for i=1:12
+for i=1:k
     for j=1:size(RCall{10},1)
         if RCall{10}(j,1)~=0
            submouseztracesmeanpercell{i}(:,RCall{10}(j,1))=mouseztracesmeanpercell{i}(:,RCall{10}(j,1))-mouseztracesmeanpercell{1}(:,RCall{10}(j,1));
@@ -56,7 +201,7 @@ for i=1:12
     end
  
 end
-for i=1:12
+for i=1:k
 
         
     for j=1:size(ICall{10},1)
@@ -69,14 +214,14 @@ for i=1:12
 
 
 end
-%% plot the traces of all the animals
+%% plot the traces of all the animals before condition
 for i=1:size(submouseztracesmeanpercell,2)
 figure(i) 
-plot(Time4plot,mean(submouseztracesmeanpercell{i}(:,142:end),2),'LineWidth',2,'color','k');
+plot(Time4plot,mean(submouseztracesmeanpercell{i},2),'LineWidth',2,'color','k');
 hold on
-SE = std(submouseztracesmeanpercell{i}(:,142:end)')/sqrt(size(submouseztracesmeanpercell{4}(:,142:end),2)); %I am not sure about what the SE will be??(:,RCall{i})
-    CIplus = mean(submouseztracesmeanpercell{i}(:,142:end),2)+(1.96*SE');%(:,RCall{i})
-    CIminus = mean(submouseztracesmeanpercell{i}(:,142:end),2)-(1.96*SE');%(:,RCall{i})
+SE = std(submouseztracesmeanpercell{i}')/sqrt(size(submouseztracesmeanpercell{i},2)); %I am not sure about what the SE will be??(:,RCall{i})
+    CIplus = mean(submouseztracesmeanpercell{i},2)+(1.96*SE');%(:,RCall{i})
+    CIminus = mean(submouseztracesmeanpercell{i}),2)-(1.96*SE');%(:,RCall{i})
   shade(Time4plot,CIplus,Time4plot,CIminus,'FillType',[1 2;2 1],'LineStyle','none','FillColor',[0.8 0.8 0.8])%red shadow [0.6,0,0]
     clear CIplus CIminus SE  
 xline(0,'LineWidth',1) %on line
@@ -85,15 +230,15 @@ xline(2,'LineWidth',1) % off line % 1 sec odor presentation
 ylim([-0.5 1])
 %clear mean
 end
-%%
+%% plot the traces of all the animals after condition
 %for i=1:size(submouseztracesmeanpercellaf,2)
-figure(4)    
+figure(i)    
    
-plot(Time4plot,mean(submouseztracesmeanpercellaf{4}(:,142:end),2),'LineWidth',2,'color','r');
+plot(Time4plot,mean(submouseztracesmeanpercellaf{i},2),'LineWidth',2,'color','r');
 hold on
-SE = std(submouseztracesmeanpercellaf{4}(:,142:end)')/sqrt(size(submouseztracesmeanpercellaf{4}(:,142:end),2)); %I am not sure about what the SE will be??(:,RCall{i})
-    CIplus = mean(submouseztracesmeanpercellaf{4}(:,142:end),2)+(1.96*SE');%(:,RCall{i})
-    CIminus = mean(submouseztracesmeanpercellaf{4}(:,142:end),2)-(1.96*SE');%(:,RCall{i})
+SE = std(submouseztracesmeanpercellaf{i}(:,142:end)')/sqrt(size(submouseztracesmeanpercellaf{i}(:,142:end),2)); %I am not sure about what the SE will be??(:,RCall{i})
+    CIplus = mean(submouseztracesmeanpercellaf{i},2)+(1.96*SE');%(:,RCall{i})
+    CIminus = mean(submouseztracesmeanpercellaf{i}(:,142:end),2)-(1.96*SE');%(:,RCall{i})
   shade(Time4plot,CIplus,Time4plot,CIminus,'FillType',[1 2;2 1],'LineStyle','none','FillColor',[0.6,0,0])%red shadow [0.6,0,0]
     clear CIplus CIminus SE  
 xline(0,'LineWidth',1) %on line
@@ -361,7 +506,11 @@ None4FS_3=size(find(NACmatrixallbfaf(:,5+i)==0&NACmatrixallbfaf(:,1+2*i)==0),1);
 
 all{i+1}=cat(1,down4FS,up4FS,None4FS,down4FS_2,up4FS_2,None4FS_2,down4FS_3,up4FS_3,None4FS_3);
 end
-
+%% Calculate the response of neurons that are activated/inhibited by both Pentanol and Hexanol after condition
+Common_RC_af=intersect(RCallaf{2},RCallaf{3});
+Common_IC_af=intersect(ICallaf{2},ICallaf{3});
+zAVG_CommonRC=cat(1,zAVGResponseaf{2}(:,Common_RC_af), zAVGResponseaf{3}(:,Common_RC_af));
+zAVG_CommonIC=cat(1,zAVGResponseaf{2}(:,Common_IC_af), zAVGResponseaf{3}(:,Common_IC_af));
 %% Make the traces ready for PCA
 PCAmousetracesmeanpercellbf=[];PCAmousetracesmeanpercellaf=[];
 for i=1:5
@@ -468,7 +617,7 @@ xlabel('PC1');
 ylabel('PC2');
     zlabel('PC3');
     view([210 30]);
-    %% Before and after condition (Pentanol vs Octanol)
+    %% Before and after condition (Pentanol vs Hexanol vs Octanol)
 CV1 = cov(PCAbfaf_pent_Hex_Oct);
 % compute the eigenvalues and eigenvectors of the covariance matrix
 [ev, el] = eig(CV1);
@@ -528,7 +677,7 @@ ylim([-4 8]);
     %%
     PCAmousetracesmeanpercellbf=PCAmousetracesmeanpercellbf(197:end,:);
     PCAmousetracesmeanpercellaf=PCAmousetracesmeanpercellaf(197:end,:);
-    %% Before and after condition (Pentanol vs Octanol)
+    %% Before condition four odors
 CV1 = cov(PCAmousetracesmeanpercellbf);
 % compute the eigenvalues and eigenvectors of the covariance matrix
 [ev, el] = eig(CV1);
@@ -578,7 +727,7 @@ ylim([-4 8]); % Corrected to ascending order
 zlabel('PC3');
 zlim([-4 8]);
 view([210 30]);
-   %% Before and after condition (Pentanol vs Octanol)
+   %% After condition four odors
 CV1 = cov(PCAmousetracesmeanpercellaf);
 % compute the eigenvalues and eigenvectors of the covariance matrix
 [ev, el] = eig(CV1);
@@ -767,93 +916,12 @@ for i = 1:5
     medallaf(i,:)=median(distanceBetweenSetsaf(:,:,i));
 
 end
-%%  Coefficient by timepoints_after conditioning/stimulation
-Coallmice=[];
-for mouse=1:8
-Coall=[];cellmean{5}=[];
-for i= 1:5
-    Cocells=[];
-%     for j=1:10
-%         if j==1
-%         alltrials=idzodortraces{i}(:,1:NAC);
-%         else
-%         alltrials(:,:,j)=idzodortraces{i}(:,NAC*(j-1)+1:NAC*j);
-%         end
-%     end
-    for j=1:10
-        cellmean{i}=mean(mousenum{1,mouse}.ztemptraceall{i}(46:75,:,:),2);%(46:90,:,:)
-        cellmean{i}(:,:,11)=cellmean{i}(:,:,j);
-        cellmean{i}(:,:,j)=[];
-        Co=corrcoef(cellmean{i}(:,:,10),mean(cellmean{i}(:,:,1:9),3));
-        Cocells=cat(2,Cocells,Co(2));
-        clear Co
-    end
- Coall=cat(1,Coall,Cocells);
 
-end
-Comean=mean(Coall,2);
-Coall=cat(2,Coall,Comean);
-Coallmice=cat(1,Coallmice,Coall);
-end
-%%  Coefficient by timepoints_after conditioning/stimulation
-Coallmiceaf=[];
-for mouse=1:8
-Coallaf=[];cellmeanaf{5}=[];
-for i= 1:k
-    Cocellsaf=[];
-%     for j=1:10
-%         if j==1
-%         alltrials=idzodortraces{i}(:,1:NAC);
-%         else
-%         alltrials(:,:,j)=idzodortraces{i}(:,NAC*(j-1)+1:NAC*j);
-%         end
-%     end
-    for j=1:10
-        cellmeanaf{i}=mean(mousenum{1,mouse}.ztemptraceallaf{i}(46:75,:,:),2);%(46:90,:,:)
-        cellmeanaf{i}(:,:,11)=cellmeanaf{i}(:,:,j);
-        cellmeanaf{i}(:,:,j)=[];
-        Co=corrcoef(cellmeanaf{i}(:,:,10),mean(cellmeanaf{i}(:,:,1:9),3));
-        Cocellsaf=cat(2,Cocellsaf,Co(2));
-        clear Co
-    end
- Coallaf=cat(1,Coallaf,Cocellsaf);
 
-end
-Comeanaf=mean(Coallaf,2);
-Coallaf=cat(2,Coallaf,Comeanaf);
-Coallmiceaf=cat(1,Coallmiceaf,Coallaf);
-end
 
-%% Save the files for four odors
-saveas(figure(1),'12animals_Mineral oil_bafcondition_MOsubtracted.png')
-saveas(figure(2),'12animals_Pentanol_bafcondition_MOsubtracte.png')
-saveas(figure(3),'12animals_Hexanol_bafcondition_MOsubtracte.png')
-saveas(figure(4),'12animals_Heptanol_bafcondition_MOsubtracte.png')
-saveas(figure(5),'12animals_Octanol_bafcondition_MOsubtracte.png')
-%%
-saveas(figure(11),'12animals_Mineral oil_bafcondition_MOsubtracted_heatmap.png')
-saveas(figure(12),'12animals_Pentanol_bafcondition_MOsubtracted_heatmap.png')
-saveas(figure(13),'12animals_Hexanol_bafcondition_MOsubtracted_heatmap.png')
-saveas(figure(14),'12animals_Heptanol_bafcondition_MOsubtracted_heatmap.png')
-saveas(figure(15),'12animals_Octanol_bafcondition_MOsubtracted_heatmap.png')
-%% Average response of RC, IC, NC
-zAVGResponseRC=zeros(2,257,5);
-zAVGResponseIC=zeros(2,257,5);
-zAVGResponseNC=zeros(2,257,5);
-for i=1:5
-zAVGResponseRC(1,1:size(RCall{i},1),i)=mean(submouseztracesmeanpercell{i}(BS*FR+1:(BS+2)*FR,RCall{i}));
-zAVGResponseIC(1,1:size(ICall{i},1),i)=mean(submouseztracesmeanpercell{i}(BS*FR+1:(BS+2)*FR,ICall{i}));
-zAVGResponseNC(1,1:size(NCall{i},1),i)=mean(submouseztracesmeanpercell{i}(BS*FR+1:(BS+2)*FR,NCall{i}));
-zAVGResponseRC(2,1:size(RCallaf{i},1),i)=mean(submouseztracesmeanpercellaf{i}(BS*FR+1:(BS+2)*FR,RCallaf{i}));
-zAVGResponseIC(2,1:size(ICallaf{i},1),i)=mean(submouseztracesmeanpercellaf{i}(BS*FR+1:(BS+2)*FR,ICallaf{i}));
-zAVGResponseNC(2,1:size(NCallaf{i},1),i)=mean(submouseztracesmeanpercellaf{i}(BS*FR+1:(BS+2)*FR,NCallaf{i}));
-end
-%%
-Common_RC_af=intersect(RCallaf{2},RCallaf{3});
-Common_IC_af=intersect(ICallaf{2},ICallaf{3});
-zAVG_CommonRC=cat(1,zAVGResponseaf{2}(:,Common_RC_af), zAVGResponseaf{3}(:,Common_RC_af));
-zAVG_CommonIC=cat(1,zAVGResponseaf{2}(:,Common_IC_af), zAVGResponseaf{3}(:,Common_IC_af));
-%%
+
+
+%% Calculate the Reliability before condition
 
 numSplits = 10;  % Define the number of splits you want
 corrMatrix = zeros(4); 
@@ -916,7 +984,8 @@ for i = 1:4
              'Color', 'white'); % Change color if needed for visibility
     end
 end
-%%
+%% Calculate the Reliability after condition
+
 numSplits = 10;  % Define the number of splits you want
 corrMatrix = zeros(4); 
 corrMatrixmiceaf=zeros(4,4,8);
@@ -979,10 +1048,15 @@ for i = 1:4
              'Color', 'white'); % Change color if needed for visibility
     end
 end
+%% Save any figure files
+saveas(figure(1),'12animals_Mineral oil_bafcondition_MOsubtracted.png')
+saveas(figure(2),'12animals_Pentanol_bafcondition_MOsubtracte.png')
+saveas(figure(3),'12animals_Hexanol_bafcondition_MOsubtracte.png')
+saveas(figure(4),'12animals_Heptanol_bafcondition_MOsubtracte.png')
+saveas(figure(5),'12animals_Octanol_bafcondition_MOsubtracte.png')
 %%
-saveas(figure(1),'8animals_PCA_4odorsbfcondition_1.png')
-saveas(figure(2),'8animals_PCA_4odorsbfcondition_2.png')
-saveas(figure(3),'8animals_PCA_4odorsbfcondition_3.png')
-saveas(figure(5),'8animals_PCA_4odorsafcondition_1.png')
-saveas(figure(6),'8animals_PCA_4odorsafcondition_2.png')
-saveas(figure(7),'8animals_PCA_4odorsafconditiont_3.png')
+saveas(figure(11),'12animals_Mineral oil_bafcondition_MOsubtracted_heatmap.png')
+saveas(figure(12),'12animals_Pentanol_bafcondition_MOsubtracted_heatmap.png')
+saveas(figure(13),'12animals_Hexanol_bafcondition_MOsubtracted_heatmap.png')
+saveas(figure(14),'12animals_Heptanol_bafcondition_MOsubtracted_heatmap.png')
+saveas(figure(15),'12animals_Octanol_bafcondition_MOsubtracted_heatmap.png')
