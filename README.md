@@ -1,4 +1,9 @@
 Matlab
+
+This repository contains custom MATLAB scripts used in the analysis of data presented in the manuscript:
+
+"Glutamatergic projection neurons in the cholinergic basal forebrain underlie learned olfactory associational valence assignments"
+(submitted to Nature Communications, 2025)*
 📁 Repository Contents
 🔬 Calcium Imaging Data Analysis
 Located in: CalciumImaging_dataanalysis/
