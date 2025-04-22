@@ -17,15 +17,7 @@ for i=1:NAC-1 %the number of accepted cells
     clear AC
 end
 Time=tbl.("Time_s__CellStatus");
-%% Alternative script for opening the traces file
-% Specify the path to your CSV file
-filename = 'your_file.csv';
 
-% Read the CSV file into a table
-data = readtable(filename);
-allAC=table2array(data);
-Time=allAC(:,1);
-allAC=allAC(:,2:end);
 %% Seperate allAC into different days
 D2start=find(diff(Time)<-1);
 %% Analyzing bf(Day1)
@@ -43,7 +35,6 @@ allACaf(isnan(allACaf)==1)=0;
    allACbf(isnan(allACbf))=0;
 %% settining up the DIO files_before
 DIO2 = readtable('A138Nt_0821bfcondition_GPIO.csv');
-
 %%
 DIO2=table2array(DIO2);
 a=find(DIO2(:,2)>1000);
@@ -110,12 +101,7 @@ for i=1:max(odors)
     ztracesmeanpercell{i}=mean(ztemptraceall{i},3);
 end
 clear ztemptrace
-% for i =1:max(odors)
-%     [r,c]=size(odortracestimes{i});
-%     tracesmeanpercell{i}=odortracesall{i}./c;
-%     ztracesmeanpercell{i}=zodortracesall{i}./c;
-%     
-% end
+
 
 %% average traces after condition/stimulation
 ztemptraceallaf{max(odorsaf)}=[];
@@ -171,6 +157,103 @@ for i=1:k
         mouseztracesmeanpercell{i}=cat(2,mouseztracesmeanpercell{i},mean(mousenum{1,mouse}.ztemptraceall{i},3));  
         end
     end
+end
+%% Use three std to find the MINERAL OIL responsive cells
+NO=size(mouseztracesmeanpercell,2);
+zAVGbaseline{NO}=[];zAVGResponse{NO}=[];zStdbaseline{NO}=[];AUCabs{NO}=[];
+for i=1:NO
+    
+    zAVGbaseline{i}=mean(mouseztracesmeanpercell{i}(1*FR+1:3*FR,:));%Change the number if you want to define the baseline in a different time frame
+    zAVGResponse{i}=mean(mouseztracesmeanpercell{i}(BS*FR+1:(BS+2)*FR,:));
+   
+    AUCabs{i}=sum(abs(mouseztracesmeanpercell{i}(BS*FR+1:(BS+2)*FR,:)));
+    zStdbaseline{i}=std(mouseztracesmeanpercell{i}(1*FR+1:3*FR,:));
+
+    %zAVGResponseall=cat(1,zAVGResponseall,zAVGResponse{i});
+    clear n s CN4t 
+end
+%%
+RCall{NO}=[];NCall{NO}=[];ICall{NO}=[];
+for i=1:NO
+     
+     RC=[];NC=[];IC=[];
+     for j=1:size(mouseztracesmeanpercell{i},2)
+         if zAVGResponse{i}(j)>3*zStdbaseline{i}(j)
+             RCstd=j;
+             RC=cat(1,RC,RCstd);
+             clear RCstd
+         elseif zAVGResponse{i}(j)<-3*zStdbaseline{i}(j)
+              ICstd=j;   
+              IC=cat(1,IC,ICstd);
+              clear ICstd
+         else 
+             NCstd=j;
+             NC=cat(1,NC,NCstd);
+             clear NCstd
+         end
+   
+     end
+     if isempty(RC)==1
+         RC=0;
+     end
+     if isempty(NC)==1
+         NC=0;
+     end
+     if isempty(IC)==1
+         IC=0;
+     end
+    
+     RCall{i}=RC;
+     NCall{i}=NC;
+     ICall{i}=IC;
+end
+%% Use three std to find the MINERAL OIL responsive cells after condition/stimulation
+NO=size(mouseztracesmeanpercellaf,2);
+zAVGbaselineaf{NO}=[];zAVGResponseaf{NO}=[];zStdbaselineaf{NO}=[];zAVGResponseallaf=[];AUCaf{NO}=[];
+for i=1:NO
+    
+    zAVGbaselineaf{i}=mean(mouseztracesmeanpercellaf{i}(1*FR+1:3*FR,:));%Change the number if you want to define the baseline in a different time frame
+    zAVGResponseaf{i}=mean(mouseztracesmeanpercellaf{i}(BS*FR+1:(BS+2)*FR,:));
+
+    AUCaf{i}=sum(mouseztracesmeanpercellaf{i}(BS*FR+1:(BS+2)*FR,:));
+    zStdbaselineaf{i}=std(mouseztracesmeanpercellaf{i}(1*FR+1:3*FR,:));
+    %zAVGResponseallaf=cat(1,zAVGResponseallaf,zAVGResponseaf{i});
+    clear n s CN4t 
+end
+%%
+RCallaf{NO}=[];NCallaf{NO}=[];ICallaf{NO}=[];
+for i=1:NO
+     s=size(mouseztracesmeanpercellaf{i},2);
+     RC=[];NC=[];IC=[];
+     for j=1:s
+         if zAVGResponseaf{i}(j)>3*zStdbaselineaf{i}(j)
+             RCstd=j;
+             RC=cat(1,RC,RCstd);
+             clear RCstd
+         elseif zAVGResponseaf{i}(j)<-3*zStdbaselineaf{i}(j)
+              ICstd=j;   
+              IC=cat(1,IC,ICstd);
+              clear ICstd
+         else 
+             NCstd=j;
+             NC=cat(1,NC,NCstd);
+             clear NCstd
+         end
+   
+     end
+     if isempty(RC)==1
+         RC=0;
+     end
+     if isempty(NC)==1
+         NC=0;
+     end
+     if isempty(IC)==1
+         IC=0;
+     end
+    
+     RCallaf{i}=RC;
+     NCallaf{i}=NC;
+     ICallaf{i}=IC;
 end
 %%
 mouseztracesmeanpercellaf{k}=[];
@@ -519,105 +602,7 @@ for i=1:5
 
 end
 
-%% Before and after condition (Pentanol vs Octanol)
-PCAbfaf_pent=cat(1,PCAmousetracesmeanpercellbf(197:392,:),PCAmousetracesmeanpercellbf(785:980,:),PCAmousetracesmeanpercellaf(197:392,:),PCAmousetracesmeanpercellaf(785:980,:));
-%Hexbf Octbf Hexaf Octaf
-%% Before and after condition (Hexanol vs Octanol)
-PCAbfaf_Hex=cat(1,PCAmousetracesmeanpercellbf(393:588,:),PCAmousetracesmeanpercellbf(785:980,:),PCAmousetracesmeanpercellaf(393:588,:),PCAmousetracesmeanpercellaf(785:980,:));
-%%
-PCAbfaf_pent_Hex_Oct=cat(1,PCAmousetracesmeanpercellbf(1:196,:),PCAmousetracesmeanpercellbf(197:392,:),PCAmousetracesmeanpercellbf(589:784,:),PCAmousetracesmeanpercellaf(1:196,:),PCAmousetracesmeanpercellaf(197:392,:),PCAmousetracesmeanpercellaf(589:784,:));
-%% Before and after condition (Pentanol vs Octanol)
-CV1 = cov(PCAbfaf_pent);
-% compute the eigenvalues and eigenvectors of the covariance matrix
-[ev, el] = eig(CV1);
-figure;plot(diag(el)./sum(diag(el)),'.')
-
-var = diag(el)./sum(diag(el));
-for i = 1:length(var)
-    cumvar(i) = sum(var(end-(i-1):end));
-end
-figure; plot(cumvar)
-tmp = find(cumvar > .9);
-dimensionality = min(tmp)
-
-% View the eigenvectors across glomeruli (only top 3)
-figure;imagesc(ev(:,end-3:end))
-
-
-% PCA dimensionality reduction
-% Project the data to top 3 eigenvectors 
-% corressponding to the largest 3 eigenvalues
-%data_2d = dataodorsandoffset*ev(:,size(ev)-1:size(ev));
-data_3d = PCAbfaf_pent*ev(:,size(ev)-2:size(ev));
-data_10d = PCAbfaf_pent*ev(:,size(ev)-9:size(ev));
-% Visualize the dimensionality reduced dataset
-
-clr = [0,1,0;0.06,1,1;0,0.3,0.2;0,0,1];%light B light G dark B dark G
-% check color scheme: c = uisetcolor
-%clr = jet(5);
-% Plot the data along the first 3 PCs
-% Color the data points based on odor labels
-ind=size(PCAbfaf_pent,1)/4;
-figure(i+5);hold on
-for ii = 1:4
-    %ind = find(clab == ii);
-%     subplot(3,5,ii);
-    plot3(data_3d(1+ind*(ii-1):ind*ii,3),data_3d(1+ind*(ii-1):ind*ii,2),data_3d(1+ind*(ii-1):ind*ii,1),'-','color',clr(ii,:),'linewidth',2,'MarkerEdgeColor',clr(ii,:))
-    pause(2)
-end
-grid on 
-xlabel('PC1');
-
-ylabel('PC2');
-    zlabel('PC3');
-    view([210 30]);
-
-%% Before and after condition (Hexanol vs Octanol)
-CV1 = cov(PCAbfaf_Hex);
-% compute the eigenvalues and eigenvectors of the covariance matrix
-[ev, el] = eig(CV1);
-figure;plot(diag(el)./sum(diag(el)),'.')
-
-var = diag(el)./sum(diag(el));
-for i = 1:length(var)
-    cumvar(i) = sum(var(end-(i-1):end));
-end
-figure; plot(cumvar)
-tmp = find(cumvar > .9);
-dimensionality = min(tmp)
-
-% View the eigenvectors across glomeruli (only top 3)
-figure;imagesc(ev(:,end-3:end))
-
-
-% PCA dimensionality reduction
-% Project the data to top 3 eigenvectors 
-% corresponding to the largest 3 eigenvalues
-%data_2d = dataodorsandoffset*ev(:,size(ev)-1:size(ev));
-data_3d = PCAbfaf_Hex*ev(:,size(ev)-2:size(ev));
-data_10d = PCAbfaf_Hex*ev(:,size(ev)-9:size(ev));
-% Visualize the dimensionality reduced dataset
-clr = [0.92,0.61,0.61;0.06,1,1;0.64,0.08,0.18;0,0,1];
-%clr = [0.06,1,1;0,1,0;0,0,1;0,0.3,0.2];
-% check color scheme: c = uisetcolor
-%clr = jet(5);
-% Plot the data along the first 3 PCs
-% Color the data points based on odor labels
-ind=size(PCAbfaf_Hex,1)/4;
-figure;hold on
-for ii = 1:4
-    %ind = find(clab == ii);
-%     subplot(3,5,ii);
-    plot3(data_3d(1+ind*(ii-1):ind*ii,3),data_3d(1+ind*(ii-1):ind*ii,2),data_3d(1+ind*(ii-1):ind*ii,1),'-','color',clr(ii,:),'linewidth',2,'MarkerEdgeColor',clr(ii,:))
-    pause(2)
-end
-grid on 
-xlabel('PC1');
-
-ylabel('PC2');
-    zlabel('PC3');
-    view([210 30]);
-    %% Before and after condition (Pentanol vs Hexanol vs Octanol)
+%% Before and after condition (Pentanol vs Hexanol vs Octanol)
 CV1 = cov(PCAbfaf_pent_Hex_Oct);
 % compute the eigenvalues and eigenvectors of the covariance matrix
 [ev, el] = eig(CV1);
@@ -677,7 +662,7 @@ ylim([-4 8]);
     %%
     PCAmousetracesmeanpercellbf=PCAmousetracesmeanpercellbf(197:end,:);
     PCAmousetracesmeanpercellaf=PCAmousetracesmeanpercellaf(197:end,:);
-    %% Before condition four odors
+    %% PCA_Before condition four odors
 CV1 = cov(PCAmousetracesmeanpercellbf);
 % compute the eigenvalues and eigenvectors of the covariance matrix
 [ev, el] = eig(CV1);
@@ -727,7 +712,7 @@ ylim([-4 8]); % Corrected to ascending order
 zlabel('PC3');
 zlim([-4 8]);
 view([210 30]);
-   %% After condition four odors
+   %% PCA_After condition four odors
 CV1 = cov(PCAmousetracesmeanpercellaf);
 % compute the eigenvalues and eigenvectors of the covariance matrix
 [ev, el] = eig(CV1);
@@ -786,41 +771,7 @@ for i=1:5
         mouseztracesaf{i}=cat(2,mouseztracesaf{i},mousenum{1,mouse}.ztemptraceallaf{i});
     end
 end
-%%
-samplingRate = 15;  % Frames per second, adjust based on your data
-duration = 2;  % Duration in seconds for the odor presentation window
-timeWindow = 76:90;  % Time points for the first 2 seconds
-% Initialize array to store angles for each trial
-anglestoControl = zeros(154, 4);
-distancetoControl=zeros(154, 4);
-% Loop through each trial to calculate the angle
-for i =1:4
-for neuron = 1:154
-    % Extract calcium activity for the first 2 seconds (time window)
-    activityWindow = mouseztraces{i}(timeWindow, neuron, :);
-    activityWindowaf=mouseztraces{5}(timeWindow, neuron, :);
-    % Calculate the mean activity vector over the time window
-    meanActivity = mean(activityWindow, 3);  % Mean across time points
-    meanActivityaf = mean(activityWindowaf, 3); 
- 
-    % Calculate the dot product between the two mean activity vectors
-    dotProduct = dot(meanActivity, meanActivityaf);
-    % ------ Euclidean Distance ------
-        euclideanDistance = norm(meanActivityaf - meanActivity);  % Euclidean distance
-    % Calculate the norms (magnitudes) of both activity vectors
-    normActivity1 = norm(meanActivity);  % Magnitude of the first activity vector
-    normActivity2 = norm(meanActivityaf);  % Magnitude of the second activity vector
-    
-    % Calculate the angle in radians between the two vectors using acos
-    angle = acos(dotProduct / (normActivity1 * normActivity2));  % Angle in radians
-    
-    % Store the angle for this trial
-    anglestoControl (neuron,i) = angle*180/pi;
-    distancetoControl(neuron,i)=euclideanDistance;
-end
-end
-
-%% The Euclidean distance of each neuron compared between odors
+%% Calculate the Euclidean distance before and after condition for each odor
 samplingRate = 1;  % Frames per second, adjust based on your data
 windowDuration = 1;  % Duration in seconds for the odor presentation window
 windowSize = windowDuration * samplingRate;  % Calculate the number of frames in the time window
@@ -828,95 +779,221 @@ numTimePoints = 196;  % Total number of time points in the data (adjust based on
 numComparisons = numTimePoints - windowSize;  % Number of consecutive time window comparisons
 
 % Initialize arrays to store angles and distances for each neuron, trial, and comparison
-anglesBetweenSets = zeros(154, 900, 5);
-distanceBetweenSets = zeros(154, 900, 5);
-medall=zeros(5,5);
+cDBetweenSets=zeros(196,8,5);
+%anglesBetweenSetsaf = zeros(196,8,5);
+distanceBetweenSetsaf = zeros(196,8,5);
+%medallaf=zeros(5,900);
 % Loop through each trial to calculate the angle and distance
 for i = 1:5
-    for neuron = 1:154
+    for mouse=1:8
         % Loop through consecutive time windows for each trial
-        for t = 1:30  % Loop from the first to the penultimate window
+        for t = 1:196  % Loop from the first to the penultimate window
             % Extract calcium activity for the current and previous time windows
-            currentWindow = mouseztraces{i}(t+44:(t+44+windowSize), neuron, :);
-            for q=1:30
-            previousWindow = mouseztraces{i}(q+44+30:(q+44+30+windowSize), neuron, :);
+            currentWindow = mousenum{1,mouse}.ztemptraceall{i}(t, :,:)-mean(mousenum{1,mouse}.ztemptraceall{i}(1:45, :,:),1);
+            previousWindow =mousenum{1,mouse}.ztemptraceallaf{i}(t, :,:)-mean(mousenum{1,mouse}.ztemptraceallaf{i}(1:45, :,:),1);
+           
             
-            % Calculate the mean activity vector over the time window
+            % % Calculate the mean activity vector over the time window
             meanCurrentActivity = mean(currentWindow, 3);  % Mean across time points
             meanPreviousActivity = mean(previousWindow, 3);  
             
             % Calculate the dot product between the two mean activity vectors
-            dotProduct = dot(meanCurrentActivity, meanPreviousActivity);
+            dotProduct = dot(meanPreviousActivity,meanCurrentActivity);
             
             % ------ Euclidean Distance ------
-            euclideanDistance = norm(meanPreviousActivity - meanCurrentActivity);  % Euclidean distance
+            euclideanDistance = norm(meanCurrentActivity- meanPreviousActivity);  % Euclidean distance
             
             % Calculate the norms (magnitudes) of both activity vectors
             normCurrentActivity = norm(meanCurrentActivity);  % Magnitude of the current activity vector
             normPreviousActivity = norm(meanPreviousActivity);  % Magnitude of the previous activity vector
             
             % Calculate the angle in radians between the two vectors using acos
-            angle = acos(dotProduct / (normCurrentActivity * normPreviousActivity));  % Angle in radians
+            %angle = acos(dotProduct / (normCurrentActivity * normPreviousActivity));  % Angle in radians
+            cosineDistance = 1-(dotProduct / (normPreviousActivity * normCurrentActivity ));
             
             % Store the angle and Euclidean distance for this comparison
-            anglesBetweenSets(neuron, 30*(t-1)+q, i) = angle * 180 / pi;  % Convert to degrees
-            distanceBetweenSets(neuron, 30*(t-1)+q,i) = euclideanDistance;
-            end
-        
-        end
+            cDBetweenSets(t,mouse,i)=cosineDistance;
+            %anglesBetweenSetsaf(t,mouse,i) = angle;   % Convert to degrees
+            distanceBetweenSetsaf(t,mouse,i) = euclideanDistance;
+         end
+      
     end
-    medall(i,i)=median(median(distanceBetweenSets(:,:,i)));
-    
 end
-%%
-samplingRate = 1;  % Frames per second, adjust based on your data
-windowDuration = 1;  % Duration in seconds for the odor presentation window
-windowSize = windowDuration * samplingRate;  % Calculate the number of frames in the time window
-numTimePoints = 196;  % Total number of time points in the data (adjust based on your data)
-numComparisons = numTimePoints - windowSize;  % Number of consecutive time window comparisons
+%% plot the Euclidean distance before and after condition along time for each odor
+%for i=1:size(submouseztracesmeanpercell,2)
+clrshade=[0.8 0.8 0.8;0,1,0;0.92,0.61,0.61;0.93,0.69,0.13;0.06,1,1];
+clr=[0,0,0;0,0.3,0.2;0.64,0.08,0.18;1,1,0;0,0,1];
 
+
+for i=2:5 
+    figure(1) 
+    if i==4
+        continue
+    end
+
+plot(Time4plot,mean(distanceBetweenSetsaf(:,:,i),2),'LineWidth',2,'color',clr(i,:));
+hold on
+SE = std(distanceBetweenSetsaf(:,:,i)')/sqrt(size(distanceBetweenSetsaf(:,:,i),2)); %I am not sure about what the SE will be??(:,RCall{i})
+    CIplus = mean(distanceBetweenSetsaf(:,:,i),2)+(1.96*SE');%(:,RCall{i})
+    CIminus = mean(distanceBetweenSetsaf(:,:,i),2)-(1.96*SE');%(:,RCall{i})
+  shade(Time4plot,CIplus,Time4plot,CIminus,'FillType',[1 2;2 1],'LineStyle','none','FillColor',clrshade(i,:))%red shadow [0.6,0,0]
+    clear CIplus CIminus SE  
+xline(0,'LineWidth',1) %on line
+%ax.XAxis.FontSize=30
+xline(2,'LineWidth',1) % off line % 1 sec odor presentation
+% ylim([-0.5 1])
+hold on
+
+end
+%% Calculate the Euclidean distance from the control odor octanol before condition
 % Initialize arrays to store angles and distances for each neuron, trial, and comparison
-anglesBetweenSetsaf = zeros(154, 900, 5);
-distanceBetweenSetsaf = zeros(154, 900, 5);
-medallaf=zeros(5,900);
+cDtocontrol=zeros(196,8,4);
+%anglesBetweenSetsaf = zeros(196,8,5);
+distancetocontrol = zeros(196,8,4);
+%medallaf=zeros(5,900);
 % Loop through each trial to calculate the angle and distance
-for i = 1:5
-    for neuron = 1:154
+for i = 1:4
+    for mouse=1:8
         % Loop through consecutive time windows for each trial
-        for t = 1:30  % Loop from the first to the penultimate window
+        for t = 1:196  % Loop from the first to the penultimate window
             % Extract calcium activity for the current and previous time windows
-            currentWindow = mouseztracesaf{i}(t+44:(t+44+windowSize), neuron, :);
-            for q=1:30
-            previousWindow = mouseztracesaf{i}(q+44+30:(q+44+30+windowSize), neuron, :);
+            currentWindow = mousenum{1,mouse}.ztemptraceall{i}(t, :,:);%-mean(mousenum{1,mouse}.ztemptraceall{i}(1:45, :,:),1);
+            previousWindow =mousenum{1,mouse}.ztemptraceall{5}(t, :,:);%-mean(mousenum{1,mouse}.ztemptraceallaf{i}(1:45, :,:),1);
+           
             
-            % Calculate the mean activity vector over the time window
+            % % Calculate the mean activity vector over the time window
             meanCurrentActivity = mean(currentWindow, 3);  % Mean across time points
             meanPreviousActivity = mean(previousWindow, 3);  
             
             % Calculate the dot product between the two mean activity vectors
-            dotProduct = dot(meanCurrentActivity, meanPreviousActivity);
+            dotProduct = dot(meanPreviousActivity,meanCurrentActivity);
             
             % ------ Euclidean Distance ------
-            euclideanDistance = norm(meanPreviousActivity - meanCurrentActivity);  % Euclidean distance
+            euclideanDistance = norm(meanCurrentActivity- meanPreviousActivity);  % Euclidean distance
             
             % Calculate the norms (magnitudes) of both activity vectors
             normCurrentActivity = norm(meanCurrentActivity);  % Magnitude of the current activity vector
             normPreviousActivity = norm(meanPreviousActivity);  % Magnitude of the previous activity vector
             
             % Calculate the angle in radians between the two vectors using acos
-            angle = acos(dotProduct / (normCurrentActivity * normPreviousActivity));  % Angle in radians
+            %angle = acos(dotProduct / (normCurrentActivity * normPreviousActivity));  % Angle in radians
+            cosineDistance = 1-(dotProduct / (normPreviousActivity * normCurrentActivity ));
             
             % Store the angle and Euclidean distance for this comparison
-            anglesBetweenSetsaf(neuron, 30*(t-1)+q, i) = angle * 180 / pi;  % Convert to degrees
-            distanceBetweenSetsaf(neuron, 30*(t-1)+q,i) = euclideanDistance;
-            end
-        
-        end
+            cDtocontrol(t,mouse,i)=cosineDistance;
+            %anglesBetweenSetsaf(t,mouse,i) = angle;   % Convert to degrees
+            distancetocontrol(t,mouse,i) = euclideanDistance;
+         end
+      
     end
-    medallaf(i,:)=median(distanceBetweenSetsaf(:,:,i));
+end
+%% plot the Euclidean distance from the control odor octanol before condition along time 
+%for i=1:size(submouseztracesmeanpercell,2)
+clrshade=[0.8 0.8 0.8;0,1,0;0.92,0.61,0.61;0.93,0.69,0.13;0.06,1,1];
+clr=[0,0,0;0,0.3,0.2;0.64,0.08,0.18;1,1,0;0,0,1];
+
+
+for i=2:4 
+    figure(2) 
+  
+
+plot(Time4plot,mean(distancetocontrol(:,:,i),2),'LineWidth',2,'color',clr(i,:));
+hold on
+SE = std(distancetocontrol(:,:,i)')/sqrt(size(distancetocontrol(:,:,i),2)); %I am not sure about what the SE will be??(:,RCall{i})
+    CIplus = mean(distancetocontrol(:,:,i),2)+(1.96*SE');%(:,RCall{i})
+    CIminus = mean(distancetocontrol(:,:,i),2)-(1.96*SE');%(:,RCall{i})
+  shade(Time4plot,CIplus,Time4plot,CIminus,'FillType',[1 2;2 1],'LineStyle','none','FillColor',clrshade(i,:))%red shadow [0.6,0,0]
+    clear CIplus CIminus SE  
+xline(0,'LineWidth',1) %on line
+%ax.XAxis.FontSize=30
+xline(2,'LineWidth',1) % off line % 1 sec odor presentation
+% ylim([-0.5 1])
+hold on
 
 end
+%% Calculate the Euclidean distance from the control odor octanol after condition
+% Initialize arrays to store angles and distances for each neuron, trial, and comparison
+cDtocontrolaf=zeros(196,8,4);
+%anglesBetweenSetsaf = zeros(196,8,5);
+distancetocontrolaf = zeros(196,8,4);
+%medallaf=zeros(5,900);
+% Loop through each trial to calculate the angle and distance
+for i = 1:4
+    for mouse=1:8
+        % Loop through consecutive time windows for each trial
+        for t = 1:196  % Loop from the first to the penultimate window
+            % Extract calcium activity for the current and previous time windows
+            currentWindow = mousenum{1,mouse}.ztemptraceallaf{i}(t, :,:);%-mean(mousenum{1,mouse}.ztemptraceall{i}(1:45, :,:),1);
+            previousWindow =mousenum{1,mouse}.ztemptraceallaf{5}(t, :,:);%-mean(mousenum{1,mouse}.ztemptraceallaf{i}(1:45, :,:),1);
+           
+            
+            % % Calculate the mean activity vector over the time window
+            meanCurrentActivity = mean(currentWindow, 3);  % Mean across time points
+            meanPreviousActivity = mean(previousWindow, 3);  
+            
+            % Calculate the dot product between the two mean activity vectors
+            dotProduct = dot(meanPreviousActivity,meanCurrentActivity);
+            
+            % ------ Euclidean Distance ------
+            euclideanDistance = norm(meanCurrentActivity- meanPreviousActivity);  % Euclidean distance
+            
+            % Calculate the norms (magnitudes) of both activity vectors
+            normCurrentActivity = norm(meanCurrentActivity);  % Magnitude of the current activity vector
+            normPreviousActivity = norm(meanPreviousActivity);  % Magnitude of the previous activity vector
+            
+            % Calculate the angle in radians between the two vectors using acos
+            %angle = acos(dotProduct / (normCurrentActivity * normPreviousActivity));  % Angle in radians
+            cosineDistance = 1-(dotProduct / (normPreviousActivity * normCurrentActivity ));
+            
+            % Store the angle and Euclidean distance for this comparison
+            cDtocontrolaf(t,mouse,i)=cosineDistance;
+            %anglesBetweenSetsaf(t,mouse,i) = angle;   % Convert to degrees
+            distancetocontrolaf(t,mouse,i) = euclideanDistance;
+         end
+      
+    end
+end
+%% plot the Euclidean distance from the control odor octanol after condition along time 
+%for i=1:size(submouseztracesmeanpercell,2)
+%clrshade=[0.8 0.8 0.8;0,1,0;0.92,0.61,0.61;0.93,0.69,0.13;0.06,1,1];
+%clr=[0,0,0;0,0.3,0.2;0.64,0.08,0.18;1,1,0;0,0,1];
+clr = [0, 0.5, 0;   % Green
+       1, 0, 0;   % Red
+       1, 0.5, 0]; % Orange
+lightenFactor = 0.5;
+clr_lighter = clr + (1 - clr) * 0.3;
+clrshade= clr + (1 - clr) * 0.5;
+clr_shade_lighter=clrshade + (1 - clrshade) * 0.5;
 
+for i=2:4 
+    figure(i) 
+  
+
+plot(Time4plot,mean(distancetocontrol(:,:,i),2),'LineWidth',2,'color',clr_lighter((i-1),:));
+hold on
+SE = std(distancetocontrol(:,:,i)')/sqrt(size(distancetocontrol(:,:,i),2)); %I am not sure about what the SE will be??(:,RCall{i})
+    CIplus = mean(distancetocontrol(:,:,i),2)+(1.96*SE');%(:,RCall{i})
+    CIminus = mean(distancetocontrol(:,:,i),2)-(1.96*SE');%(:,RCall{i})
+  shade(Time4plot,CIplus,Time4plot,CIminus,'FillType',[1 2;2 1],'LineStyle','none','FillColor',clr_shade_lighter((i-1),:))%red shadow [0.6,0,0]
+    clear CIplus CIminus SE  
+xline(0,'LineWidth',1) %on line
+%ax.XAxis.FontSize=30
+xline(2,'LineWidth',1) % off line % 1 sec odor presentation
+ylim([-0.5 6])
+hold on
+plot(Time4plot,mean(distancetocontrolaf(:,:,i),2),'LineWidth',2,'color',clr((i-1),:));
+hold on
+SE = std(distancetocontrolaf(:,:,i)')/sqrt(size(distancetocontrol(:,:,i),2)); %I am not sure about what the SE will be??(:,RCall{i})
+    CIplus = mean(distancetocontrolaf(:,:,i),2)+(1.96*SE');%(:,RCall{i})
+    CIminus = mean(distancetocontrolaf(:,:,i),2)-(1.96*SE');%(:,RCall{i})
+  shade(Time4plot,CIplus,Time4plot,CIminus,'FillType',[1 2;2 1],'LineStyle','none','FillColor',clrshade((i-1),:))%red shadow [0.6,0,0]
+    clear CIplus CIminus SE  
+xline(0,'LineWidth',1) %on line
+%ax.XAxis.FontSize=30
+xline(2,'LineWidth',1) % off line % 1 sec odor presentation
+ylim([-0.5 6])
+hold on
+end
 
 
 
@@ -959,31 +1036,7 @@ corrMatrixmice(:,:,mouse)=corrMatrix;
 end
 corrMatrixmicemean=mean(corrMatrixmice,3);
 clear corrMatrix correlations
-%%
-% Plot heat map
-figure(1)
-imagesc(corrMatrixmicemean);  % Display the correlation matrix as a heat map
-colorbar;              % Add a color bar to indicate the correlation scale
-title('Odor Correlation Matrix');
-xlabel('Odor');
-ylabel('Odor');
-caxis([0.3 0.9]);% Adjust axis ticks and labels if you have specific odor labels
-numOdors = size(corrMatrix, 1);
-xticks(1:numOdors);
-yticks(1:numOdors);
-% Optionally, label the ticks if odors have specific names
-odorLabels = {'Pentanol(HF)', 'Hexanol(HF)', 'Heptanol(Ctrl)', 'Octanol(Ctrl)'};
-xticklabels(odorLabels);
-yticklabels(odorLabels);
-for i = 1:4
-    for j = 1:4
-        % Display the correlation value in each cell
-        text(j, i, num2str(corrMatrixmicemean(i, j), '%.2f'), ... % Format to 2 decimal places
-             'HorizontalAlignment', 'center', ...
-             'VerticalAlignment', 'middle', ...
-             'Color', 'white'); % Change color if needed for visibility
-    end
-end
+
 %% Calculate the Reliability after condition
 
 numSplits = 10;  % Define the number of splits you want
@@ -1022,32 +1075,7 @@ corrMatrixmiceaf(:,:,mouse)=corrMatrix;
 end
 corrMatrixmicemeanaf=mean(corrMatrixmiceaf,3);
 
-%%
-% Plot heat map
-figure(2);
-imagesc(corrMatrixmicemeanaf);  % Display the correlation matrix as a heat map
-colorbar;              % Add a color bar to indicate the correlation scale
-title('Odor Correlation Matrix');
-xlabel('Odor');
-ylabel('Odor');
-caxis([0.3 0.9]);
-numOdors = size(corrMatrix, 1);
-xticks(1:numOdors);
-yticks(1:numOdors);
-% Optionally, label the ticks if odors have specific names
-odorLabels = {'Pentanol(HF)', 'Hexanol(HF)', 'Heptanol(Ctrl)', 'Octanol(Ctrl)'};
-xticklabels(odorLabels);
-yticklabels(odorLabels);
 
-for i = 1:4
-    for j = 1:4
-        % Display the correlation value in each cell
-        text(j, i, num2str(corrMatrixmicemeanaf(i, j), '%.2f'), ... % Format to 2 decimal places
-             'HorizontalAlignment', 'center', ...
-             'VerticalAlignment', 'middle', ...
-             'Color', 'white'); % Change color if needed for visibility
-    end
-end
 %% Save any figure files
 saveas(figure(1),'12animals_Mineral oil_bafcondition_MOsubtracted.png')
 saveas(figure(2),'12animals_Pentanol_bafcondition_MOsubtracte.png')
