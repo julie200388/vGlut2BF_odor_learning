@@ -7,7 +7,6 @@ This repository contains custom MATLAB and Python scripts/notebooks for data ana
 
 ## 📁 Repository Contents
 
-<details>
 <summary><strong>🔬 Calcium Imaging Data Analysis</strong></summary>
 
 - **`/matlab/CalciumImaging_dataanalysis.m`**
@@ -18,9 +17,7 @@ This repository contains custom MATLAB and Python scripts/notebooks for data ana
     - PCA and correlation matrix analysis
     - Euclidean distance calculations for odor representations
 
-</details>
 
-<details>
 <summary><strong>🧪 Behavioral Analysis — Go/No-Go Task</strong></summary>
 
 - **`/matlab/MEDPCparser.m`**  
@@ -41,9 +38,7 @@ This repository contains custom MATLAB and Python scripts/notebooks for data ana
 - **`/matlab/learningability.m`**  
     Calculate the number of trials required to reach performance threshold
 
-</details>
 
-<details>
 <summary><strong>📊 Odor Decoding Analysis</strong></summary>
 
 - **`/python/odor_decoding.ipynb`**
@@ -51,7 +46,6 @@ This repository contains custom MATLAB and Python scripts/notebooks for data ana
     - Generate confusion matrices and performance metrics
     - Visualize decoding results
 
-</details>
 
 ---
 
