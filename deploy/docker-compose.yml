@@ -4,6 +4,7 @@ x-shared: &common
   image: zhuokund/datascience-notebook:cuda11.4.0-python3.8
   volumes:
     - ../../:/src/
+    - /ssh-agent:/ssh-agent
   env_file:
     - .env
 
