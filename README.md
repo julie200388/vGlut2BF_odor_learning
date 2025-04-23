@@ -5,7 +5,16 @@ This repository contains custom MATLAB and Python scripts/notebooks for data ana
 
 <summary><strong>🔬 Calcium Imaging Data Analysis</strong></summary>
 
-- **`/matlab/CalciumImaging_dataanalysis.m`**
+- **`/matlab/CalciumImaging_odorscreening.m`**
+    - Use the olfactory screening dataset
+    - Process `.csv` output files from Inscopix software (calcium activity traces per cell)
+    - Averaged trace plotting
+    - Heatmap generation
+    - Classification of excited, inhibited, and non-responsive cells (odor screening and post-association)
+
+
+- **`/matlab/CalciumImaging_Olfactorylearning.m`**
+    - Use the olfactory learning dataset
     - Process `.csv` output files from Inscopix software (calcium activity traces per cell)
     - Averaged trace plotting
     - Heatmap generation
