@@ -5,6 +5,8 @@ This repository contains custom MATLAB scripts used in the analysis of data pres
 "Glutamatergic projection neurons in the cholinergic basal forebrain underlie learned olfactory associational valence assignments"
 (submitted to Nature Communications, 2025)*
 📁 Repository Contents
+Located in: Shade/ 
+Plot the standard error of the traces (Run before ploting)
 🔬 Calcium Imaging Data Analysis for olfactory screening
 Located in: CalciumImaging_dataanalysis/
 For odor screening experiments
@@ -15,7 +17,7 @@ Scripts for processing .csv output files from Inscopix software containing calci
 -Heatmap generation
 
 🔬 Calcium Imaging Data Analysis for olfactory learning
-Located in: CalciumImaging_dataanalysis/
+Located in: CalciumImaging_Olfactorylearning/
 For olfactory learning experiments
 Scripts for processing .csv output files from Inscopix software containing calcium activity traces per cell. Includes:
 
