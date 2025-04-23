@@ -56,7 +56,26 @@ for i=1:max(odors)
     ztracesmeanpercell{i}=mean(ztemptraceall{i},3);
 end
 clear ztemptrace
-%%Save individual animal matfile in the same folder
+%% Output traces 2 seconds after odor onset for the linear model (One file for each mouse)
+traces4model2secbf=[];
+for i=1:NO
+    featureall=[];featureallaf=[];
+for j= 1:10
+    feature=reshape(ztemptraceall{i}(46:75,:,j),1,NAC*45);
+   
+    featureall=cat(1,featureall,feature);
+
+end
+traces4model2secbf=cat(1,traces4model2secbf,featureall);
+
+odor4feature(10*(i-1)+1:10*i,1)=i;
+end
+
+traces4model2secbf=cat(2,traces4model2secbf,odor4feature);
+
+%writematrix(traces4model2secbf,'072624_A134R1_tracesfeature_odorbfcondition_2SECAFODORONSET_v3.csv')
+%writematrix(traces4model2secaf,'080324_A134R1_tracesfeature_odorafcondition_2SECAFODORONSET_v3.csv')
+%%Save individual animal matfile in the same folder before moving on
 %% Open all the files from different animals
 % Save the data of individual mouse before this processing
 n = input('number of mice: ');
@@ -90,7 +109,7 @@ end
 
 %% Use three std to find the MINERAL OIL responsive cells
 NO=size(mouseztracesmeanpercellaf,2);
-zAVGbaseline{NO}=[];zAVGResponse{NO}=[];zStdbaseline{NO}=[];AUCabs{NO}=[]
+zAVGbaseline{NO}=[];zAVGResponse{NO}=[];zStdbaseline{NO}=[];AUCabs{NO}=[];
     
     zAVGbaseline{10}=mean(mouseztracesmeanpercell{i}(1*FR+1:3*FR,:));%Change the number if you want to define the baseline in a different time frame
     zAVGResponse{10}=mean(mouseztracesmeanpercell{i}(BS*FR+1:(BS+2)*FR,:));
@@ -135,17 +154,9 @@ RCall{NO}=[];NCall{NO}=[];ICall{NO}=[];
 
 
 %% Subtract Mineral oil (MO) responsive cells Ch10 is MO
-submouseztracesmeanpercell=mouseztracesmeanpercell;submouseztracesmeanpercellaf=mouseztracesmeanpercellaf;
-for i=1:k
-    for j=1:size(RCall{10},1)
-        if RCall{10}(j,1)~=0
-           submouseztracesmeanpercell{i}(:,RCall{10}(j,1))=mouseztracesmeanpercell{i}(:,RCall{10}(j,1))-mouseztracesmeanpercell{1}(:,RCall{10}(j,1));
-      
-        else
-        submouseztracesmeanpercell{i}(:,RCall{10}(j,1))=mouseztracesmeanpercell{i}(:,RCall{10}(j,1));
-        end
-    end
- 
+submouseztracesmeanpercell=mouseztracesmeanpercell;
+for i=1:12
+    submouseztracesmeanpercell{i}(:,RCall{10}(j,1))=mouseztracesmeanpercell{i}(:,RCall{10}(j,1))-mouseztracesmeanpercell{1}(:,RCall{10}(j,1));
 end
 %% Use three std to find the responsive cells
 NO=size(mouseztracesmeanpercell,2);
@@ -197,7 +208,10 @@ for i=1:NO
      ICall{i}=IC;
 end
 %% plot the traces of all the animals (Excite, inhibited, non responsive cells)
-for i=1:size(submouseztracesmeanpercell,2)
+for i=2:size(submouseztracesmeanpercell,2)
+    if i==10
+        continue
+    end
 figure(i) 
 plot(Time4plot,mean(submouseztracesmeanpercell{i}(:,RCall{i}),2),'LineWidth',2,'color','b');
 hold on
@@ -242,9 +256,9 @@ end
 TF=BS*FR+RS*FR+1;%TF=total frames
 mouseztracesmeanHF=mean(submouseztracesmeanpercell{2},1);
 %before heatmap
-for i=1:size(submouseztracesmeanpercell,2)
+for i=2:size(submouseztracesmeanpercell,2)
     figure(i+10)
-    subplot(1,2,1)
+
     ztracesmeannum=cat(1,submouseztracesmeanpercell{i},mouseztracesmeanHF);
     ztracesmeannum2=sortrows(ztracesmeannum',197,'descend');
     ztracesmeannum=ztracesmeannum2(:,1:196);
@@ -262,9 +276,7 @@ tickdisplay2=strings([size(ztracesmeannum,1),1]);
          tickdisplay2(125, 1)='125'; 
          tickdisplay2(150, 1)='150'; 
         tickdisplay2(175, 1)='175'; 
-        tickdisplay2(200, 1)='200';
-        tickdisplay2(225, 1)='225'; 
-        tickdisplay2(250, 1)='250'; 
+      
 
 S=struct(h);
 ax=S.Axes;

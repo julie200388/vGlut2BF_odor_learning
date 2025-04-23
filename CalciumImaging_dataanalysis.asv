@@ -1,5 +1,5 @@
-%% Process the calcium data of individual mouse
-
+%% Calcium imaging data processing for individual mouse from the associative learning experiments
+%Open calcium imaging trace files
 clear all
 close all
 NAC = input('number of accepted cells: '); %Number of accepted cells
@@ -55,19 +55,6 @@ DIO3(b(1:end),2)=0;
 d=diff(DIO3(:,2));
 d2=find(d==1)+1;
 odorpresentationtime2=DIO3(d2,1);
-%% two Continuous DIO files 
-[fn4,pth4] = uigetfile('*.*');
-DIO1=sprintf('%s%s',pth4,fn4);
-DIO3=csvread(DIO1);
-a=find(DIO3(:,2)>1000);
-b=find(DIO3(:,2)<1000);
-DIO3(a(1:end),2)=1;
-DIO3(b(1:end),2)=0;
-d=diff(DIO3(:,2));
-d2=find(d==1)+1;
-odorpresentationtime2=DIO3(d2,1);
-odorpresentationtime3=odorpresentationtime2+DIO2(end,1);
-odorpresentationtime=cat(1,odorpresentationtime,odorpresentationtime3);
 
 %% Combine odor presentation and traces % 011422 data don't run this section
 [fn3,pth3] = uigetfile('*.*');
@@ -78,7 +65,7 @@ odors = csvread(odorsfn);
 odorsfnaf = sprintf('%s%s',pth5,fn5);
 odorsaf = csvread(odorsfnaf);
 
-%% get average traces before condition
+%% average traces before condition
 FR = input('Frame rate: '); %Number of accepted cells
 BS=  input('Time before stimulation: ');
 RS=  input('Time after stimulation:');
@@ -103,7 +90,7 @@ end
 clear ztemptrace
 
 
-%% average traces after condition/stimulation
+%% average traces after condition
 ztemptraceallaf{max(odorsaf)}=[];
 for i = 1:length(odorpresentationtime2) %for 011422 file use this:i=1:(length(TP)-1)
 
@@ -125,12 +112,30 @@ ztracesmeanpercellaf{max(odorsaf)}=[];
 for i=1:max(odorsaf)
     ztracesmeanpercellaf{i}=mean(ztemptraceallaf{i},3);
 end
-% for i =1:max(odors)
-%     [r,c]=size(odortracestimes{i});
-%     tracesmeanpercell{i}=odortracesall{i}./c;
-%     ztracesmeanpercell{i}=zodortracesall{i}./c;
-%     
-% end% plot all the animals
+%% Output traces 2 seconds after odor onset for the linear model (One file for each mouse)
+traces4model2secbf=[];traces4model2secaf=[];
+for i=1:NO
+    
+submouseztracesmeanpercellaf{i}(:,RCallaf{1})=mouseztracesmeanpercellaf{i}(:,RCallaf{1})-mouseztracesmeanpercellaf{1}(:,RCallaf{1});
+for i=1:NO
+    featureall=[];featureallaf=[];
+for j= 1:10
+    feature=reshape(ztemptraceall{i}(46:75,:,j),1,NAC*45);
+    featureaf=reshape(ztemptraceallaf{i}(46:75,:,j),1,NAC*45);
+    featureall=cat(1,featureall,feature);
+    featureallaf=cat(1,featureallaf,featureaf);
+end
+traces4model2secbf=cat(1,traces4model2secbf,featureall);
+traces4model2secaf=cat(1,traces4model2secaf,featureallaf);
+odor4feature(10*(i-1)+1:10*i,1)=i;
+end
+
+traces4model2secbf=cat(2,traces4model2secbf,odor4feature);
+traces4model2secaf=cat(2,traces4model2secaf,odor4feature);
+%writematrix(traces4model2secbf,'072624_A134R1_tracesfeature_odorbfcondition_2SECAFODORONSET_v3.csv')
+%writematrix(traces4model2secaf,'080324_A134R1_tracesfeature_odorafcondition_2SECAFODORONSET_v3.csv')
+
+% save individual mouse before moving on
 %% Open all the files from different animals
 % Save the data of individual mouse before this processing
 n = input('number of mice: ');
@@ -143,8 +148,8 @@ for i = 1:n
     mouseID{i} = name1(1:5);
 end
 %% Combine all the animals_ before condition
-mouseztracesmeanpercell{k}=[];
-for i=1:k
+mouseztracesmeanpercell{5}=[];
+for i=1:5
     for mouse=1:n
         if n==1
        
@@ -160,29 +165,22 @@ for i=1:k
 end
 %% Use three std to find the MINERAL OIL responsive cells
 NO=size(mouseztracesmeanpercell,2);
-zAVGbaseline{NO}=[];zAVGResponse{NO}=[];zStdbaseline{NO}=[];AUCabs{NO}=[];
-for i=1:NO
-    
-    zAVGbaseline{i}=mean(mouseztracesmeanpercell{i}(1*FR+1:3*FR,:));%Change the number if you want to define the baseline in a different time frame
-    zAVGResponse{i}=mean(mouseztracesmeanpercell{i}(BS*FR+1:(BS+2)*FR,:));
-   
-    AUCabs{i}=sum(abs(mouseztracesmeanpercell{i}(BS*FR+1:(BS+2)*FR,:)));
-    zStdbaseline{i}=std(mouseztracesmeanpercell{i}(1*FR+1:3*FR,:));
+zAVGbaseline{NO}=[];zAVGResponse{NO}=[];zStdbaseline{NO}=[];AUCabs{NO}=[];  
+    zAVGbaseline{1}=mean(mouseztracesmeanpercell{i}(1*FR+1:3*FR,:));%Change the number if you want to define the baseline in a different time frame
+    zAVGResponse{1}=mean(mouseztracesmeanpercell{i}(BS*FR+1:(BS+2)*FR,:));
+    zStdbaseline{1}=std(mouseztracesmeanpercell{i}(1*FR+1:3*FR,:));
 
-    %zAVGResponseall=cat(1,zAVGResponseall,zAVGResponse{i});
-    clear n s CN4t 
-end
 %%
 RCall{NO}=[];NCall{NO}=[];ICall{NO}=[];
-for i=1:NO
+
      
      RC=[];NC=[];IC=[];
      for j=1:size(mouseztracesmeanpercell{i},2)
-         if zAVGResponse{i}(j)>3*zStdbaseline{i}(j)
+         if zAVGResponse{1}(j)>3*zStdbaseline{1}(j)
              RCstd=j;
              RC=cat(1,RC,RCstd);
              clear RCstd
-         elseif zAVGResponse{i}(j)<-3*zStdbaseline{i}(j)
+         elseif zAVGResponse{1}(j)<-3*zStdbaseline{1}(j)
               ICstd=j;   
               IC=cat(1,IC,ICstd);
               clear ICstd
@@ -203,61 +201,12 @@ for i=1:NO
          IC=0;
      end
     
-     RCall{i}=RC;
-     NCall{i}=NC;
-     ICall{i}=IC;
-end
-%% Use three std to find the MINERAL OIL responsive cells after condition/stimulation
-NO=size(mouseztracesmeanpercellaf,2);
-zAVGbaselineaf{NO}=[];zAVGResponseaf{NO}=[];zStdbaselineaf{NO}=[];zAVGResponseallaf=[];AUCaf{NO}=[];
-for i=1:NO
-    
-    zAVGbaselineaf{i}=mean(mouseztracesmeanpercellaf{i}(1*FR+1:3*FR,:));%Change the number if you want to define the baseline in a different time frame
-    zAVGResponseaf{i}=mean(mouseztracesmeanpercellaf{i}(BS*FR+1:(BS+2)*FR,:));
-
-    AUCaf{i}=sum(mouseztracesmeanpercellaf{i}(BS*FR+1:(BS+2)*FR,:));
-    zStdbaselineaf{i}=std(mouseztracesmeanpercellaf{i}(1*FR+1:3*FR,:));
-    %zAVGResponseallaf=cat(1,zAVGResponseallaf,zAVGResponseaf{i});
-    clear n s CN4t 
-end
+     RCall{1}=RC;
+     NCall{1}=NC;
+     ICall{1}=IC;
 %%
-RCallaf{NO}=[];NCallaf{NO}=[];ICallaf{NO}=[];
-for i=1:NO
-     s=size(mouseztracesmeanpercellaf{i},2);
-     RC=[];NC=[];IC=[];
-     for j=1:s
-         if zAVGResponseaf{i}(j)>3*zStdbaselineaf{i}(j)
-             RCstd=j;
-             RC=cat(1,RC,RCstd);
-             clear RCstd
-         elseif zAVGResponseaf{i}(j)<-3*zStdbaselineaf{i}(j)
-              ICstd=j;   
-              IC=cat(1,IC,ICstd);
-              clear ICstd
-         else 
-             NCstd=j;
-             NC=cat(1,NC,NCstd);
-             clear NCstd
-         end
-   
-     end
-     if isempty(RC)==1
-         RC=0;
-     end
-     if isempty(NC)==1
-         NC=0;
-     end
-     if isempty(IC)==1
-         IC=0;
-     end
-    
-     RCallaf{i}=RC;
-     NCallaf{i}=NC;
-     ICallaf{i}=IC;
-end
-%%
-mouseztracesmeanpercellaf{k}=[];
-for i=1:k
+mouseztracesmeanpercellaf{5}=[];
+for i=1:5
     for mouse=1:n
         if n==1
         mouseztracesmeanpercellaf{i}=mousenum{1,mouse}.ztracesmeanpercellaf{i};
@@ -269,34 +218,57 @@ for i=1:k
         end
     end
 end
+%% Use three std to find the MINERAL OIL responsive cells after condition
+NO=size(mouseztracesmeanpercellaf,2);
+zAVGbaselineaf{NO}=[];zAVGResponseaf{NO}=[];zStdbaselineaf{NO}=[];AUCaf{NO}=[];
+    zAVGbaselineaf{1}=mean(mouseztracesmeanpercellaf{i}(1*FR+1:3*FR,:));%Change the number if you want to define the baseline in a different time frame
+    zAVGResponseaf{1}=mean(mouseztracesmeanpercellaf{i}(BS*FR+1:(BS+2)*FR,:));
+    zStdbaselineaf{1}=std(mouseztracesmeanpercellaf{i}(1*FR+1:3*FR,:));
 
+%%
+RCallaf{NO}=[];NCallaf{NO}=[];ICallaf{NO}=[];
+     s=size(mouseztracesmeanpercellaf{i},2);
+     RC=[];NC=[];IC=[];
+     for j=1:s
+         if zAVGResponseaf{1}(j)>3*zStdbaselineaf{1}(j)
+             RCstd=j;
+             RC=cat(1,RC,RCstd);
+             clear RCstd
+         elseif zAVGResponseaf{1}(j)<-3*zStdbaselineaf{1}(j)
+              ICstd=j;   
+              IC=cat(1,IC,ICstd);
+              clear ICstd
+         else 
+             NCstd=j;
+             NC=cat(1,NC,NCstd);
+             clear NCstd
+         end
+   
+     end
+     if isempty(RC)==1
+         RC=0;
+     end
+     if isempty(NC)==1
+         NC=0;
+     end
+     if isempty(IC)==1
+         IC=0;
+     end
+    
+     RCallaf{1}=RC;
+     NCallaf{1}=NC;
+     ICallaf{1}=IC;
 
-%% Subtract Mineral oil (MO) responsive cells Ch10 is MO
-submouseztracesmeanpercell=mouseztracesmeanpercell;submouseztracesmeanpercellaf=mouseztracesmeanpercellaf;
-for i=1:k
-    for j=1:size(RCall{10},1)
-        if RCall{10}(j,1)~=0
-           submouseztracesmeanpercell{i}(:,RCall{10}(j,1))=mouseztracesmeanpercell{i}(:,RCall{10}(j,1))-mouseztracesmeanpercell{1}(:,RCall{10}(j,1));
-      
-        else
-        submouseztracesmeanpercell{i}(:,RCall{10}(j,1))=mouseztracesmeanpercell{i}(:,RCall{10}(j,1));
-        end
-    end
- 
+%% Subtract Mineral oil (MO) responsive cells 
+submouseztracesmeanpercellaf=mouseztracesmeanpercellaf;
+for i=1:5
+    submouseztracesmeanpercellaf{i}(:,RCallaf{1})=mouseztracesmeanpercellaf{i}(:,RCallaf{1})-mouseztracesmeanpercellaf{1}(:,RCallaf{1});    
 end
-for i=1:k
 
-        
-    for j=1:size(ICall{10},1)
-        if ICall{10}(j,1)~=0
-           submouseztracesmeanpercell{i}(:,ICall{10}(j,1))=mouseztracesmeanpercell{i}(:,ICall{10}(j,1))-mouseztracesmeanpercell{10}(:,ICall{10}(j,1));
-        else
-            submouseztracesmeanpercell{i}(:,ICall{10}(j,1))=mouseztracesmeanpercell{i}(:,ICall{10}(j,1));
-        end
-    end
-
-
+for i=1:5
+   submouseztracesmeanpercellaf{i}(:,ICallaf{1}(j,1))=mouseztracesmeanpercellaf{i}(:,ICallaf{10}(j,1))-mouseztracesmeanpercellaf{10}(:,ICallaf{10}(j,1));   
 end
+
 %% plot the traces of all the animals before condition
 for i=1:size(submouseztracesmeanpercell,2)
 figure(i) 
@@ -304,7 +276,7 @@ plot(Time4plot,mean(submouseztracesmeanpercell{i},2),'LineWidth',2,'color','k');
 hold on
 SE = std(submouseztracesmeanpercell{i}')/sqrt(size(submouseztracesmeanpercell{i},2)); %I am not sure about what the SE will be??(:,RCall{i})
     CIplus = mean(submouseztracesmeanpercell{i},2)+(1.96*SE');%(:,RCall{i})
-    CIminus = mean(submouseztracesmeanpercell{i}),2)-(1.96*SE');%(:,RCall{i})
+    CIminus = mean(submouseztracesmeanpercell{i},2)-(1.96*SE');%(:,RCall{i})
   shade(Time4plot,CIplus,Time4plot,CIminus,'FillType',[1 2;2 1],'LineStyle','none','FillColor',[0.8 0.8 0.8])%red shadow [0.6,0,0]
     clear CIplus CIminus SE  
 xline(0,'LineWidth',1) %on line
@@ -314,7 +286,7 @@ ylim([-0.5 1])
 %clear mean
 end
 %% plot the traces of all the animals after condition
-%for i=1:size(submouseztracesmeanpercellaf,2)
+for i=1:size(submouseztracesmeanpercellaf,2)
 figure(i)    
    
 plot(Time4plot,mean(submouseztracesmeanpercellaf{i},2),'LineWidth',2,'color','r');
@@ -329,7 +301,7 @@ xline(2,'LineWidth',1) % off line % 1 sec odor presentation
 %ax.XAxis.FontSize=30
 ylim([-0.5 1])
 %clear mean
-%end
+end
 
 %% plot the heatmap
 TF=BS*FR+RS*FR+1;%TF=total frames
@@ -596,12 +568,14 @@ zAVG_CommonRC=cat(1,zAVGResponseaf{2}(:,Common_RC_af), zAVGResponseaf{3}(:,Commo
 zAVG_CommonIC=cat(1,zAVGResponseaf{2}(:,Common_IC_af), zAVGResponseaf{3}(:,Common_IC_af));
 %% Make the traces ready for PCA
 PCAmousetracesmeanpercellbf=[];PCAmousetracesmeanpercellaf=[];
-for i=1:5
+for i=2:5
     PCAmousetracesmeanpercellbf=cat(1,PCAmousetracesmeanpercellbf,submouseztracesmeanpercell{i}(:,104:end));
     PCAmousetracesmeanpercellaf=cat(1,PCAmousetracesmeanpercellaf,submouseztracesmeanpercellaf{i}(:,104:end));
 
 end
-
+%%
+PCAbfaf_pent_Hex_Oct=[];
+PCAbfaf_pent_Hex_Oct=cat(1,PCAbfaf_pent_Hex_Oct,PCAmousetracesmeanpercellbf(1:392,:),PCAmousetracesmeanpercellbf(589:784,:),PCAmousetracesmeanpercellaf(1:392,:),PCAmousetracesmeanpercellaf(589:784,:));
 %% Before and after condition (Pentanol vs Hexanol vs Octanol)
 CV1 = cov(PCAbfaf_pent_Hex_Oct);
 % compute the eigenvalues and eigenvectors of the covariance matrix
@@ -634,19 +608,36 @@ clr = [0,1,0;0.92,0.61,0.61;0.06,1,1;0,0.3,0.2;0.64,0.08,0.18;0,0,1];%light B li
 % Plot the data along the first 3 PCs
 % Color the data points based on odor labels
 ind=size(PCAbfaf_pent_Hex_Oct,1)/6;
+
+%% Plot Pentanol Octanol before after
 figure();hold on
 for ii = 1:6
-    % if ii==2
-    %     continue
-    % end
-    % if ii==5 
-    %     continue
-    % end
-   % if ii==4 
-   %      continue
-   %  end
-    %ind = find(clab == ii);
-%     subplot(3,5,ii);
+    if ii==2
+        continue
+    end
+    if ii==5 
+       continue
+    end
+ 
+    plot3(data_3d(1+ind*(ii-1):ind*ii,3),data_3d(1+ind*(ii-1):ind*ii,2),data_3d(1+ind*(ii-1):ind*ii,1),'-','color',clr(ii,:),'linewidth',2,'MarkerEdgeColor',clr(ii,:))
+    pause(2)
+end
+grid on 
+xlabel('PC1');
+xlim([-2 14]);
+ylabel('PC2');
+ylim([-4 8]);
+    zlabel('PC3');
+   zlim([-6 6]); 
+    view([210 30]);
+%% Plot Hexanol Octanol before after
+figure();hold on
+for ii = 2:6
+   
+    if ii==4 
+       continue
+    end
+ 
     plot3(data_3d(1+ind*(ii-1):ind*ii,3),data_3d(1+ind*(ii-1):ind*ii,2),data_3d(1+ind*(ii-1):ind*ii,1),'-','color',clr(ii,:),'linewidth',2,'MarkerEdgeColor',clr(ii,:))
     pause(2)
 end
@@ -659,10 +650,8 @@ ylim([-4 8]);
    zlim([-6 6]); 
     view([210 30]);
 
-    %%
-    PCAmousetracesmeanpercellbf=PCAmousetracesmeanpercellbf(197:end,:);
-    PCAmousetracesmeanpercellaf=PCAmousetracesmeanpercellaf(197:end,:);
-    %% PCA_Before condition four odors
+
+%% PCA_Before condition four odors
 CV1 = cov(PCAmousetracesmeanpercellbf);
 % compute the eigenvalues and eigenvectors of the covariance matrix
 [ev, el] = eig(CV1);
@@ -1074,7 +1063,6 @@ corrMatrixmiceaf(:,:,mouse)=corrMatrix;
 
 end
 corrMatrixmicemeanaf=mean(corrMatrixmiceaf,3);
-
 
 %% Save any figure files
 saveas(figure(1),'12animals_Mineral oil_bafcondition_MOsubtracted.png')
