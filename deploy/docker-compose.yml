@@ -14,4 +14,4 @@ services:
     container_name: ${JUPYTER_NAME}
     ports:
       - "${JUPYTER_HOST:-0.0.0.0}:${JUPYTER_PORT_CONTAINER:-8888}:8888"
-    entrypoint: ["/src/odor_grin_lens/deploy/notebook.sh",]
+    entrypoint: jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.token="${JUPYTER_PASSWORD:-}" --no-browser
