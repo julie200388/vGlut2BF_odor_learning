@@ -1,27 +1,109 @@
-This repository contains custom MATLAB and Python scripts/notebooks for data analysis in the manuscript:
+# 📘 Calcium Imaging Analysis Pipeline
 
-**Glutamatergic projection neurons in the cholinergic basal forebrain underlie learned olfactory associational valence assignments**  
-<sub><em>(submitted to Nature Communications, 2025)</em></sub>
+This repository contains a modular MATLAB pipeline for analyzing calcium‐imaging datasets from associative learning experiments.  
+It supports:
 
-<summary><strong>🔬 Calcium Imaging Data Analysis</strong></summary>
+- Two-day experiments (before vs after conditioning)
+- Single-day experiments
+- Cohort analysis for both types
 
-- **`/matlab/CalciumImaging_odorscreening.m`**
-    - Use the olfactory screening dataset
-    - Process `.csv` output files from Inscopix software (calcium activity traces per cell)
-    - Averaged trace plotting
-    - Heatmap generation
-    - Classification of excited, inhibited, and non-responsive cells (odor screening and post-association)
+The pipeline uses configuration templates and helper functions located in `configs/` and `+utils/`.
+
+---
+
+# 🔧 Requirements
+
+- MATLAB R2021 or newer  
+- All `+utils/*.m` files on path  
+- For two-day analysis:  
+  - Calcium trace CSV file  
+  - GPIO (DIO) CSV files  
+  - Odor label CSV files
 
 
-- **`/matlab/CalciumImaging_Olfactorylearning.m`**
-    - Use the olfactory learning dataset
-    - Process `.csv` output files from Inscopix software (calcium activity traces per cell)
-    - Averaged trace plotting
-    - Heatmap generation
-    - Classification of excited, inhibited, and non-responsive cells (odor screening and post-association)
-    - PCA and correlation matrix analysis
-    - Euclidean distance calculations for odor representations
+---
 
+# 🧠 1. Two-Day Analysis (`run_analysis.m`)
+
+Use this for experiments with:
+
+- Day 1: Before conditioning (bf)
+- Day 2: After conditioning (af)
+
+---
+
+## Step 1 — Edit the configuration template
+
+Open: configs/example_config.m
+
+Set your file paths and parameters. The template already includes:
+
+- trace CSV  
+- DIO (GPIO) paths  
+- odor label CSVs  
+- frame rate, baseline & response windows  
+- MIneral oil subtraction parameters  (If subtracting Mineral oil response is needed)
+- decoding window  
+- reliability settings  
+
+You only need to update the file paths.
+
+---
+
+## Step 2 — Run analysis
+
+```matlab
+cfg = example_config();
+run_analysis(cfg);
+Outputs will appear in:
+
+./outputs/YYYYMMDD_HHMMSS/
+    ├── figures/
+    ├── data/
+    └── <animal>_animal_for_cohort.mat
+
+
+The cohort file is used for run_cohort.---
+👥 2. Two-Day Cohort Analysis (run_cohort.m)
+Use after multiple animals have been processed with run_analysis.m.
+animal_packs/
+    Mouse1_animal_for_cohort.mat
+    Mouse2_animal_for_cohort.mat
+    Mouse3_animal_for_cohort.mat
+
+📘 3. Single-Day Analysis (run_analysis_singleday.m)
+Use for single-session datasets. 
+configs/example_config_singleday.m
+Specify:
+trace CSV
+odor label CSV
+DIO onset CSV
+frame rate, baseline, response windows
+cfg = example_config_singleday();
+run_analysis_singleday(cfg);
+
+Outputs
+./outputs_singleday/YYYYMMDD_HHMMSS/
+    ├── figures/
+    ├── data/
+    └── <animal>_single_for_cohort.mat
+
+👥 4. Single-Day Cohort (run_cohort_singleday.m)
+singleday_packs/
+    MouseA_single_for_cohort.mat
+    MouseB_single_for_cohort.mat
+    MouseC_single_for_cohort.mat
+Place all single-day packs in one folder:
+run_cohort_singleday('./singleday_packs/');
+
+Outputs:
+./outputs_cohort_singleday/
+    ├── cohort_PCA_all_odors.png
+    ├── cohort_heatmaps/
+    ├── cohort_responsive_counts.csv
+    └── summary.mat
+
+# 📁 Recommended Directory Structure
 
 <summary><strong>🧪 Behavioral Analysis — Go/No-Go Task</strong></summary>
 
