@@ -52,25 +52,30 @@ You only need to update the file paths.
 
 ## Step 2 — Run analysis
 
-
+```md
 cfg = example_config();
 run_analysis(cfg);
-Outputs will appear in:
 
+
+
+```
+Outputs will appear in:
+```md
 ./outputs/YYYYMMDD_HHMMSS/
     ├── figures/
     ├── data/
     └── <animal>_animal_for_cohort.mat
-
+```
 
 The cohort file is used for run_cohort.---
 👥 2. Two-Day Cohort Analysis (run_cohort.m)
 Use after multiple animals have been processed with run_analysis.m.
+```md
 animal_packs/
     Mouse1_animal_for_cohort.mat
     Mouse2_animal_for_cohort.mat
     Mouse3_animal_for_cohort.mat
-
+```
 📘 3. Single-Day Analysis (run_analysis_singleday.m)
 Use for single-session datasets. 
 configs/example_config_singleday.m
@@ -79,30 +84,36 @@ trace CSV
 odor label CSV
 DIO onset CSV
 frame rate, baseline, response windows
+```md
 cfg = example_config_singleday();
 run_analysis_singleday(cfg);
-
+```
 Outputs
+```md
 ./outputs_singleday/YYYYMMDD_HHMMSS/
     ├── figures/
     ├── data/
     └── <animal>_single_for_cohort.mat
-
+```
 👥 4. Single-Day Cohort (run_cohort_singleday.m)
+```md
 singleday_packs/
     MouseA_single_for_cohort.mat
     MouseB_single_for_cohort.mat
     MouseC_single_for_cohort.mat
+```
 Place all single-day packs in one folder:
+```md
 run_cohort_singleday('./singleday_packs/');
-
+```
 Outputs:
+```md
 ./outputs_cohort_singleday/
     ├── cohort_PCA_all_odors.png
     ├── cohort_heatmaps/
     ├── cohort_responsive_counts.csv
     └── summary.mat
-
+```
 # 📁 Recommended Directory Structure
 
 <summary><strong>🧪 Behavioral Analysis — Go/No-Go Task</strong></summary>
