@@ -52,7 +52,7 @@ You only need to update the file paths.
 
 ## Step 2 — Run analysis
 
-```matlab
+
 cfg = example_config();
 run_analysis(cfg);
 Outputs will appear in:
