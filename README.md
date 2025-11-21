@@ -114,7 +114,6 @@ Outputs:
     ├── cohort_responsive_counts.csv
     └── summary.mat
 ```
-# 📁 Recommended Directory Structure
 
 <summary><strong>🧪 Behavioral Analysis — Go/No-Go Task</strong></summary>
 
