@@ -11,7 +11,7 @@ The pipeline uses configuration templates and helper functions located in `confi
 
 ---
 
-# 🔧 Requirements
+## 🔧 Requirements
 
 - MATLAB R2021 or newer  
 - All `+utils/*.m` files on path  
@@ -23,7 +23,7 @@ The pipeline uses configuration templates and helper functions located in `confi
 
 ---
 
-# 🧠 1. Two-Day Analysis (`run_analysis.m`)
+## 🧠 1. Two-Day Analysis (`run_analysis.m`)
 
 Use this for experiments with:
 
@@ -32,7 +32,7 @@ Use this for experiments with:
 
 ---
 
-## Step 1 — Edit the configuration template
+#### Step 1 — Edit the configuration template
 
 Open: configs/example_config.m
 
@@ -50,7 +50,7 @@ You only need to update the file paths.
 
 ---
 
-## Step 2 — Run analysis
+#### Step 2 — Run analysis
 
 ```md
 cfg = example_config();
@@ -68,7 +68,7 @@ Outputs will appear in:
 ```
 
 The cohort file is used for run_cohort.---
-👥 2. Two-Day Cohort Analysis (run_cohort.m)
+### 👥 2. Two-Day Cohort Analysis (run_cohort.m)
 Use after multiple animals have been processed with run_analysis.m.
 ```md
 animal_packs/
@@ -76,7 +76,7 @@ animal_packs/
     Mouse2_animal_for_cohort.mat
     Mouse3_animal_for_cohort.mat
 ```
-📘 3. Single-Day Analysis (run_analysis_singleday.m)
+### 📘 3. Single-Day Analysis (run_analysis_singleday.m)
 Use for single-session datasets. 
 configs/example_config_singleday.m
 Specify:
@@ -95,7 +95,7 @@ Outputs
     ├── data/
     └── <animal>_single_for_cohort.mat
 ```
-👥 4. Single-Day Cohort (run_cohort_singleday.m)
+### 👥 4. Single-Day Cohort (run_cohort_singleday.m)
 ```md
 singleday_packs/
     MouseA_single_for_cohort.mat
